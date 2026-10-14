@@ -1,0 +1,5 @@
+archivo_privado.txt
+logs/
+*.log
+
+node_modules/
