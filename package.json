@@ -1,0 +1,16 @@
+{
+  "name": "astralabs-inventario-api",
+  "version": "1.0.0",
+  "description": "API de Inventario - Sistema de Gestion de Inventario para el Comedor (Casa Amandita)",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "jest",
+    "dev": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
