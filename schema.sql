@@ -63,7 +63,7 @@ CREATE TABLE lotes (
     fecha_vencimiento     DATE,                    -- NULL si el artículo no es perecedero
     donante_id           INTEGER REFERENCES donantes(id),
     cantidad_inicial     NUMERIC(12,2) NOT NULL CHECK (cantidad_inicial >= 0),
-    cantidad_disponible  NUMERIC(12,2) NOT NULL CHECK (cantidad_disponible >= 0),
+    cantidad_disponible  NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (cantidad_disponible >= 0),
     fecha_ingreso        DATE NOT NULL DEFAULT CURRENT_DATE,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -256,7 +256,7 @@ BEGIN
         UPDATE lotes
         SET cantidad_disponible = cantidad_disponible + NEW.cantidad
         WHERE id = NEW.lote_id;
-    ELSIF v_tipo IN ('salida', 'merma') THEN
+    ELSIF v_tipo IN ('salida', 'merma', 'excedente') THEN
         UPDATE lotes
         SET cantidad_disponible = cantidad_disponible - NEW.cantidad
         WHERE id = NEW.lote_id;
