@@ -11,7 +11,7 @@
     display: grid;
     grid-template-columns: 0.9fr 1.1fr;
     width: min(1050px, 100%);
-    min-height: 600px;
+    min-height: 601px;
     border-radius: 30px;
     overflow: hidden;
     background: white;
