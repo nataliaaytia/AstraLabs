@@ -2,11 +2,18 @@
 import { useState } from "react";
 import "./Cabecera.css";
 
-function Cabecera({ paginaActual, navegar }) {
+function Cabecera({ paginaActual, navegar, usuarioActual,
+    esAdmin,
+    cerrarSesion, }) {
     const [menuAbierto, setMenuAbierto] = useState(false);
 
     const cambiarPagina = (pagina) => {
         navegar(pagina);
+        setMenuAbierto(false);
+    };
+
+    const salir = () => {
+        cerrarSesion();
         setMenuAbierto(false);
     };
 
@@ -20,7 +27,7 @@ function Cabecera({ paginaActual, navegar }) {
                     aria-label="Ir al inicio"
                 >
                     <span className="cabecera-logo-icono">
-                        {/*no se asusten hijas esto es pal logo */}
+                        {/*no se asusten hijas esto es pal logo, si quieren lo pueden poner como otro componente y solo llamarlo aca */}
                         <svg
                             viewBox="0 0 48 48"
                             fill="none"
@@ -58,28 +65,60 @@ function Cabecera({ paginaActual, navegar }) {
                         }`}
                     aria-label="Navegación principal"
                 >
-                    <button
-                        className={`cabecera-enlace ${paginaActual === "home" ? "activo" : ""
-                            }`}
-                        onClick={() => cambiarPagina("home")}
-                    >
-                        Inicio
-                    </button>
+                    {esAdmin && (
+                        <>
+                            <button
+                                className={`cabecera-enlace ${paginaActual === "almacen" ? "activo" : ""
+                                    }`}
+                                onClick={() => cambiarPagina("almacen")}
+                            >
+                                Almacén
+                            </button>
 
-                    <button
-                        className={`cabecera-enlace ${paginaActual === "almacen" ? "activo" : ""
-                            }`}
-                        onClick={() => cambiarPagina("almacen")}
-                    >
-                        Almacén
-                    </button>
+                            <button
+                                className={`cabecera-enlace ${paginaActual === "roles" ? "activo" : ""
+                                    }`}
+                                onClick={() => cambiarPagina("roles")}
+                            >
+                                Gestión de roles
+                            </button>
+                        </>
+                    )}
 
-                    <button
-                        className="cabecera-boton-login"
-                        onClick={() => cambiarPagina("login")}
-                    >
-                        Iniciar sesión
-                    </button>
+                    {usuarioActual ? (
+                        <div className="cabecera-sesion">
+                            <div className="cabecera-usuario">
+                                <span className="cabecera-avatar">
+                                    {usuarioActual.nombre.charAt(0)}
+                                </span>
+
+                                <span className="cabecera-usuario-info">
+                                    <strong>{usuarioActual.nombre}</strong>
+                                    <small>
+                                        {usuarioActual.rol === "admin"
+                                            ? "Administradora"
+                                            : usuarioActual.rol === "personal"
+                                                ? "Personal"
+                                                : "Visitante"}
+                                    </small>
+                                </span>
+                            </div>
+
+                            <button
+                                className="cabecera-boton-salir"
+                                onClick={salir}
+                            >
+                                Cerrar sesión
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            className="cabecera-boton-login"
+                            onClick={() => cambiarPagina("login")}
+                        >
+                            Iniciar sesión
+                        </button>
+                    )}
                 </nav>
 
             </div>

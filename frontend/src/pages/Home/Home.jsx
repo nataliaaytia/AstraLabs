@@ -36,6 +36,7 @@ function Home({ navegar }) {
                             <span aria-hidden="true">↓</span>
                         </a>
                     </div>
+
                     {/* esta parte no me convence si lo ven raro lo quitan xfa */}
                     <span className="home-detalle-corazon" aria-hidden="true">
                         ♡
