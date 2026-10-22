@@ -1,12 +1,18 @@
 
 import { useState } from "react";
 import ModalArticulo from "../../components/Articulos/ModalArticulo";
+import ModalExcedente from "../../components/Excedentes/ModalExcedente";
 import {
     CATEGORIAS,
     UNIDADES_MEDIDA,
     cargarArticulos,
     guardarArticulos,
 } from "../../data/catalogo";
+import {
+    DESTINOS_EXCEDENTE,
+    cargarExcedentes,
+    guardarExcedentes,
+} from "../../data/excedentes";
 
 import "./Almacen.css";
 
@@ -16,6 +22,8 @@ function Almacen({ navegar }) {
     const [busqueda, setBusqueda] = useState("");
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [mensaje, setMensaje] = useState(null);
+    const [excedentes, setExcedentes] = useState(cargarExcedentes);
+    const [articuloExcedente, setArticuloExcedente] = useState(null);
 
     // Registrar un artículo nuevo
     const registrarArticulo = (nuevoArticulo) => {
@@ -78,6 +86,48 @@ function Almacen({ navegar }) {
             exito: true,
             mensaje: "Artículo registrado correctamente.",
         };
+    };
+
+    // HU-09
+    const registrarExcedente = ({ articuloId, cantidad, destino, observaciones }) => {
+        const articulo = articulos.find((a) => a.id === articuloId);
+
+        if (!articulo) {
+            return { exito: false, mensaje: "El artículo ya no existe en el catálogo." };
+        }
+
+        if (!Number.isFinite(cantidad) || cantidad <= 0) {
+            return { exito: false, mensaje: "Ingresa una cantidad mayor a cero." };
+        }
+
+        if (!DESTINOS_EXCEDENTE.includes(destino)) {
+            return { exito: false, mensaje: "Selecciona el destino del excedente." };
+        }
+
+        const excedente = {
+            id: crypto.randomUUID(),
+            articuloId,
+            articulo: articulo.nombre,
+            unidadMedida: articulo.unidadMedida,
+            cantidad,
+            destino,
+            observaciones,
+            fecha: new Date().toISOString(),
+        };
+
+        const actualizados = [excedente, ...excedentes];
+
+        if (!guardarExcedentes(actualizados)) {
+            return { exito: false, mensaje: "No fue posible registrar el excedente." };
+        }
+
+        setExcedentes(actualizados);
+        setMensaje({
+            tipo: "exito",
+            texto: `"${articulo.nombre}" se marcó como excedente con destino: ${destino}.`,
+        });
+
+        return { exito: true, mensaje: "Excedente registrado correctamente." };
     };
 
     // Buscar y filtrar
@@ -218,6 +268,7 @@ function Almacen({ navegar }) {
                                         <th>Categoría</th>
                                         <th>Unidad de medida</th>
                                         <th>Fecha de registro</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
 
@@ -245,6 +296,19 @@ function Almacen({ navegar }) {
                                                 {new Date(
                                                     articulo.fechaRegistro
                                                 ).toLocaleDateString("es-BO")}
+                                            </td>
+
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="almacen-excedente-boton"
+                                                    onClick={() => {
+                                                        setMensaje(null);
+                                                        setArticuloExcedente(articulo);
+                                                    }}
+                                                >
+                                                    Marcar excedente
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -278,6 +342,53 @@ function Almacen({ navegar }) {
                     )}
                 </div>
 
+                <div className="almacen-catalogo almacen-excedentes">
+                    <div className="almacen-catalogo-cabecera">
+                        <div>
+                            <h2>Excedentes registrados</h2>
+                            <p>Historial de artículos marcados como excedente y su destino.</p>
+                        </div>
+
+                        <span className="almacen-total">
+                            {excedentes.length} registros
+                        </span>
+                    </div>
+
+                    {excedentes.length > 0 ? (
+                        <div className="almacen-tabla-contenedor">
+                            <table className="almacen-tabla">
+                                <thead>
+                                    <tr>
+                                        <th>Artículo</th>
+                                        <th>Cantidad</th>
+                                        <th>Destino</th>
+                                        <th>Observaciones</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {excedentes.map((excedente) => (
+                                        <tr key={excedente.id}>
+                                            <td><strong>{excedente.articulo}</strong></td>
+                                            <td>{excedente.cantidad} {excedente.unidadMedida}</td>
+                                            <td>{excedente.destino}</td>
+                                            <td>{excedente.observaciones || "—"}</td>
+                                            <td>
+                                                {new Date(excedente.fecha).toLocaleDateString("es-BO")}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="almacen-excedentes-vacio">
+                            Aún no hay excedentes registrados.
+                        </p>
+                    )}
+                </div>
+
                 <button
                     className="almacen-volver"
                     onClick={() => navegar("home")}
@@ -287,6 +398,12 @@ function Almacen({ navegar }) {
 
             </div>
 
+            <ModalExcedente
+                articulo={articuloExcedente}
+                onCerrar={() => setArticuloExcedente(null)}
+                onGuardar={registrarExcedente}
+            />
+
             <ModalArticulo
                 abierto={modalAbierto}
                 onCerrar={() => setModalAbierto(false)}
@@ -295,5 +412,4 @@ function Almacen({ navegar }) {
         </section>
     );
 }
-
 export default Almacen;

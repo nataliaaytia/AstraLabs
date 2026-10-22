@@ -1,5 +1,3 @@
-// HU-09 / RF-09: registro de excedentes (sin campos monetarios)
-
 export const DESTINOS_EXCEDENTE = [
     "Donación a otra institución",
     "Redistribución a otra área",
