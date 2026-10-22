@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import ModalArticulo from "../../components/Articulos/ModalArticulo";
-import ModalExcedente from "../../components/Excedentes/ModalExcedente";
+import ModalExcedente from "../../components/Excedentes/Excedente";
 import {
     CATEGORIAS,
     UNIDADES_MEDIDA,
