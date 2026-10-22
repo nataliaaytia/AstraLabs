@@ -70,4 +70,25 @@ async function registrarSalida({
   }
 }
 
+/**
+ * Consulta el stock actual de un artículo (RF-05).
+ * Lee directo de vw_stock_articulo: la vista ya suma los lotes,
+ * así que lo que devuelve es siempre el valor recalculado, nunca
+ * un contador que alguien tuvo que actualizar a mano.
+ */
+async function obtenerStockArticulo(articuloId) {
+  const { rows } = await pool.query(
+    `SELECT articulo_id, articulo, stock_minimo, stock_actual
+     FROM vw_stock_articulo
+     WHERE articulo_id = $1`,
+    [articuloId],
+  );
+  return rows[0] || null;
+}
+
 module.exports = { obtenerLotesConStock, registrarSalida };
+module.exports = {
+  obtenerLotesConStock,
+  registrarSalida,
+  obtenerStockArticulo,
+};
