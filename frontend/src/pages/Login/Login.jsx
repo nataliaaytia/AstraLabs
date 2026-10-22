@@ -2,13 +2,21 @@
 import { useState } from "react";
 import "./Login.css";
 
-function Login({ navegar }) {
+function Login({ navegar, iniciarSesion }) {
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [mostrarContrasena, setMostrarContrasena] = useState(false);
+    const [error, setError] = useState("");
 
     const manejarIngreso = (e) => {
         e.preventDefault();
+        setError("");
+
+        const resultado = iniciarSesion(correo, contrasena);
+
+        if (!resultado.exito) {
+            setError(resultado.mensaje);
+        }
     };
 
     return (
@@ -85,15 +93,17 @@ function Login({ navegar }) {
                             </div>
                         </div>
 
-                        <button type="submit" className="login-boton" disabled>
+                        {error && (
+                            <div className="login-error" role="alert">
+                                <span aria-hidden="true">✕</span>
+                                {error}
+                            </div>
+                        )}
+
+                        <button type="submit" className="login-boton">
                             Iniciar sesión
                             <span aria-hidden="true">→</span>
                         </button>
-
-                        <p className="login-pendiente">
-                            El acceso estará disponible cuando se conecte
-                            el sistema de autenticación.
-                        </p>
 
                     </form>
 
