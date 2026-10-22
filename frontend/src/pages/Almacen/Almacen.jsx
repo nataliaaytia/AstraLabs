@@ -1,39 +1,297 @@
 
+import { useState } from "react";
+import ModalArticulo from "../../components/Articulos/ModalArticulo";
+import {
+    CATEGORIAS,
+    UNIDADES_MEDIDA,
+    cargarArticulos,
+    guardarArticulos,
+} from "../../data/catalogo";
+
 import "./Almacen.css";
 
 function Almacen({ navegar }) {
+    const [articulos, setArticulos] = useState(cargarArticulos);
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [busqueda, setBusqueda] = useState("");
+    const [filtroCategoria, setFiltroCategoria] = useState("");
+    const [mensaje, setMensaje] = useState(null);
+
+    // Registrar un artículo nuevo
+    const registrarArticulo = (nuevoArticulo) => {
+        const nombre = nuevoArticulo.nombre.trim().replace(/\s+/g, " ");
+
+        if (
+            !nombre ||
+            !CATEGORIAS.includes(nuevoArticulo.categoria) ||
+            !UNIDADES_MEDIDA.includes(nuevoArticulo.unidadMedida)
+        ) {
+            return {
+                exito: false,
+                mensaje: "Completa correctamente todos los campos.",
+            };
+        }
+
+        const normalizar = (texto) =>
+            texto.normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+
+        const duplicado = articulos.some(
+            (articulo) =>
+                normalizar(articulo.nombre) === normalizar(nombre) &&
+                articulo.categoria === nuevoArticulo.categoria
+        );
+
+        if (duplicado) {
+            return {
+                exito: false,
+                mensaje: "Ya existe un artículo con ese nombre en esta categoría.",
+            };
+        }
+
+        const articulo = {
+            id: crypto.randomUUID(),
+            nombre,
+            categoria: nuevoArticulo.categoria,
+            unidadMedida: nuevoArticulo.unidadMedida,
+            fechaRegistro: new Date().toISOString(),
+        };
+
+        const actualizados = [...articulos, articulo];
+
+        if (!guardarArticulos(actualizados)) {
+            return {
+                exito: false,
+                mensaje: "No fue posible guardar el artículo.",
+            };
+        }
+
+        setArticulos(actualizados);
+        setMensaje({
+            tipo: "exito",
+            texto: `"${nombre}" se registró correctamente en el catálogo.`,
+        });
+
+        return {
+            exito: true,
+            mensaje: "Artículo registrado correctamente.",
+        };
+    };
+
+    // Buscar y filtrar
+    const articulosFiltrados = articulos.filter((articulo) => {
+        const coincideNombre = articulo.nombre
+            .toLowerCase()
+            .includes(busqueda.toLowerCase().trim());
+
+        const coincideCategoria =
+            !filtroCategoria ||
+            articulo.categoria === filtroCategoria;
+
+        return coincideNombre && coincideCategoria;
+    });
+
+    const categoriasUsadas = new Set(
+        articulos.map((articulo) => articulo.categoria)
+    ).size;
+
     return (
-        <section className="almacen">
-            <div className="almacen-contenido">
+        <section className="almacen-pagina">
+            <div className="almacen-contenedor">
 
-                <div className="almacen-icono" aria-hidden="true">
-                    ♡
+                <div className="almacen-encabezado">
+                    <div>
+                        <span className="almacen-etiqueta">
+                            ✦ CASA AMANDITA · GESTIÓN DE INVENTARIO
+                        </span>
+
+                        <h1>
+                            Nuestro <em>almacén</em>
+                        </h1>
+
+                        <p>
+                            Cada recurso cuenta. Organicemos con cariño
+                            los artículos que acompañan el bienestar
+                            de nuestra familia.
+                        </p>
+                    </div>
+
+                    <button
+                        className="almacen-nuevo"
+                        onClick={() => {
+                            setMensaje(null);
+                            setModalAbierto(true);
+                        }}
+                    >
+                        <span aria-hidden="true">＋</span> Nuevo artículo
+                    </button>
                 </div>
 
-                <span className="almacen-etiqueta">
-                    CASA AMANDITA · GESTIÓN INTERNA
-                </span>
+                <div className="almacen-estadisticas">
+                    <div className="almacen-estadistica">
+                        <span>Artículos registrados</span>
+                        <strong>{articulos.length}</strong>
+                        <small>En nuestro catálogo</small>
+                    </div>
 
-                <h1>
-                    Nuestro <em>almacén</em>
-                </h1>
+                    <div className="almacen-estadistica">
+                        <span>Categorías utilizadas</span>
+                        <strong>{categoriasUsadas}</strong>
+                        <small>De {CATEGORIAS.length} disponibles</small>
+                    </div>
 
-                <p>
-                    Un espacio para organizar y cuidar los recursos
-                    que hacen posible el bienestar de nuestra familia.
-                </p>
-
-                <div className="almacen-aviso">
-                    <span aria-hidden="true">✿</span>
-                    Estamos preparando este espacio con mucho cariño.
-                    <br />
-                    ¡Próximamente!
+                    <div className="almacen-estadistica almacen-estadistica-especial">
+                        <span aria-hidden="true" className="almacen-estadistica-corazon">
+                            ♡
+                        </span>
+                        <p>
+                            Organizando recursos,
+                            <br />
+                            <em>cuidando personas.</em>
+                        </p>
+                    </div>
                 </div>
 
-                <button onClick={() => navegar("home")}>
+                {mensaje && (
+                    <div
+                        className={`almacen-mensaje almacen-mensaje-${mensaje.tipo}`}
+                        role="status"
+                    >
+                        <span aria-hidden="true">✓</span>
+                        {mensaje.texto}
+                        <button
+                            onClick={() => setMensaje(null)}
+                            aria-label="Cerrar mensaje"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+
+                <div className="almacen-catalogo">
+                    <div className="almacen-catalogo-cabecera">
+                        <div>
+                            <h2>Catálogo de artículos</h2>
+                            <p>
+                                Consulta los artículos registrados
+                                y sus respectivas categorías.
+                            </p>
+                        </div>
+
+                        <span className="almacen-total">
+                            {articulosFiltrados.length} artículos
+                        </span>
+                    </div>
+
+                    <div className="almacen-filtros">
+                        <input
+                            type="search"
+                            placeholder="Buscar artículo por nombre..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            aria-label="Buscar artículos"
+                        />
+
+                        <select
+                            value={filtroCategoria}
+                            onChange={(e) => setFiltroCategoria(e.target.value)}
+                            aria-label="Filtrar por categoría"
+                        >
+                            <option value="">Todas las categorías</option>
+
+                            {CATEGORIAS.map((categoria) => (
+                                <option key={categoria} value={categoria}>
+                                    {categoria}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {articulosFiltrados.length > 0 ? (
+                        <div className="almacen-tabla-contenedor">
+                            <table className="almacen-tabla">
+                                <thead>
+                                    <tr>
+                                        <th>Artículo</th>
+                                        <th>Categoría</th>
+                                        <th>Unidad de medida</th>
+                                        <th>Fecha de registro</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {articulosFiltrados.map((articulo) => (
+                                        <tr key={articulo.id}>
+                                            <td>
+                                                <div className="almacen-articulo-nombre">
+                                                    <span className="almacen-articulo-icono">
+                                                        ✿
+                                                    </span>
+                                                    <strong>{articulo.nombre}</strong>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span className="almacen-categoria">
+                                                    {articulo.categoria}
+                                                </span>
+                                            </td>
+
+                                            <td>{articulo.unidadMedida}</td>
+
+                                            <td>
+                                                {new Date(
+                                                    articulo.fechaRegistro
+                                                ).toLocaleDateString("es-BO")}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="almacen-vacio">
+                            <div className="almacen-vacio-icono">౨ৎ⋆˚｡⋆</div>
+
+                            <h3>
+                                {articulos.length === 0
+                                    ? "Nuestro catálogo está vacio w"
+                                    : "No encontramos artículos"}
+                            </h3>
+
+                            <p>
+                                {articulos.length === 0
+                                    ? "Comienza registrando el primer artículo del almacén"
+                                    : "Prueba con otra búsqueda o categoría"}
+                            </p>
+
+                            {articulos.length === 0 && (
+                                <button
+                                    onClick={() => setModalAbierto(true)}
+                                >
+                                    Registrar artículo →
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <button
+                    className="almacen-volver"
+                    onClick={() => navegar("home")}
+                >
                     ← Volver al inicio
                 </button>
+
             </div>
+
+            <ModalArticulo
+                abierto={modalAbierto}
+                onCerrar={() => setModalAbierto(false)}
+                onGuardar={registrarArticulo}
+            />
         </section>
     );
 }
