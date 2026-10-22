@@ -35,7 +35,7 @@ function Login({ navegar, iniciarSesion }) {
                 <div className="login-formulario-contenedor">
 
                     <span className="login-etiqueta">
-                        BIENVENIDO DE NUEVO
+                        BIENVENIDO
                     </span>
 
                     <h1>
