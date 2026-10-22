@@ -1,0 +1,84 @@
+.almacen {
+    min-height: calc(100vh - 94px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 24px;
+    text-align: center;
+    background:
+        radial-gradient(ellipse at 0% 95%, var(--durazno), transparent 40%),
+        radial-gradient(ellipse at 100% 0%, var(--salvia-claro), transparent 35%),
+        var(--crema-claro);
+}
+
+.almacen-contenido {
+    max-width: 650px;
+}
+
+.almacen-icono {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--crema);
+    color: var(--verde-oscuro);
+    font-size: 60px;
+}
+
+.almacen-etiqueta {
+    color: var(--verde-oscuro);
+    letter-spacing: 2px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.almacen h1 {
+    margin: 20px 0;
+    font-family: "DM Serif Display", serif;
+    font-size: clamp(44px, 6vw, 76px);
+    font-weight: 400;
+    color: var(--texto);
+}
+
+.almacen h1 em {
+    color: var(--verde-oscuro);
+}
+
+.almacen p {
+    color: var(--texto-suave);
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+.almacen-aviso {
+    margin: 35px 0;
+    padding: 30px;
+    border: 1px solid var(--salvia-claro);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+    line-height: 2;
+    color: var(--texto);
+}
+
+.almacen-aviso span {
+    display: block;
+    color: var(--coral);
+    font-size: 30px;
+}
+
+.almacen button {
+    padding: 15px 27px;
+    border: none;
+    border-radius: 30px;
+    background: var(--verde-oscuro);
+    color: white;
+    font-size: 13px;
+}
+
+.almacen button:hover {
+    background: var(--salvia);
+}
