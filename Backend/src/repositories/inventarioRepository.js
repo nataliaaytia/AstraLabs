@@ -71,6 +71,54 @@ async function registrarSalida({
 }
 
 /**
+ * Registra una merma de forma atómica, igual que una salida pero con
+ * motivo obligatorio en vez de destino (RF-06).
+ *
+ * @param {number} articuloId
+ * @param {number} cantidadTotal
+ * @param {number} usuarioId
+ * @param {string} motivo - 'vencimiento' | 'deterioro' | 'perdida'
+ * @param {Array<{lote_id:number, cantidad_descontada:number}>} movimientosFEFO
+ * @returns {Promise<number>} id del movimiento creado
+ */
+async function registrarMerma({
+  articuloId,
+  cantidadTotal,
+  usuarioId,
+  motivo,
+  movimientosFEFO,
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, motivo)
+       VALUES ('merma', $1, $2, $3, $4)
+       RETURNING id`,
+      [articuloId, cantidadTotal, usuarioId, motivo],
+    );
+    const movimientoId = rows[0].id;
+
+    for (const m of movimientosFEFO) {
+      await client.query(
+        `INSERT INTO movimiento_lotes (movimiento_id, lote_id, cantidad)
+         VALUES ($1, $2, $3)`,
+        [movimientoId, m.lote_id, m.cantidad_descontada],
+      );
+    }
+
+    await client.query("COMMIT");
+    return movimientoId;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Consulta el stock actual de un artículo (RF-05).
  * Lee directo de vw_stock_articulo: la vista ya suma los lotes,
  * así que lo que devuelve es siempre el valor recalculado, nunca
@@ -91,4 +139,5 @@ module.exports = {
   obtenerLotesConStock,
   registrarSalida,
   obtenerStockArticulo,
+  registrarMerma,
 };
