@@ -1,6 +1,7 @@
 const express = require("express");
 const salidasRouter = require("./routes/salidas");
 const stockRouter = require("./routes/stock");
+const mermaRouter = require("./routes/merma");
 
 const app = express();
 app.use(express.json());
@@ -13,6 +14,8 @@ app.get("/health", (req, res) => {
 app.use("/api/salidas", salidasRouter);
 
 app.use("/api/articulos", stockRouter);
+
+app.use("/api/mermas", mermaRouter);
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
