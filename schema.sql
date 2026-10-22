@@ -82,7 +82,7 @@ CREATE TABLE movimientos (
     fecha           TIMESTAMPTZ NOT NULL DEFAULT now(),
     usuario_id      INTEGER NOT NULL REFERENCES usuarios(id),
     donante_id      INTEGER REFERENCES donantes(id),         -- solo aplica a tipo='entrada'
-    motivo          VARCHAR(50),                              -- vencimiento, deterioro, perdida (mermas)
+    motivo          VARCHAR(50) CHECK (motivo IS NULL OR motivo IN ('vencimiento', 'deterioro', 'perdida')),,                              -- vencimiento, deterioro, perdida (mermas)
     destino         VARCHAR(100),                              -- area/consumo (salidas) o destino de excedente
     observaciones   TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
