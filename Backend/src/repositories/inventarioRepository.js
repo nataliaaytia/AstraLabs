@@ -70,6 +70,42 @@ async function registrarSalida({
   }
 }
 
+async function registrarExcedente({
+  articuloId,
+  cantidadTotal,
+  usuarioId,
+  destino,
+  movimientosFEFO,
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows: movRows } = await client.query(
+      `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, destino)
+       VALUES ('excedente', $1, $2, $3, $4)
+       RETURNING id`,
+      [articuloId, cantidadTotal, usuarioId, destino],
+    );
+    const movimientoId = movRows[0].id;
+
+    for (const { loteId, cantidad } of movimientosFEFO) {
+      await client.query(
+        `INSERT INTO movimiento_lotes (movimiento_id, lote_id, cantidad) VALUES ($1, $2, $3)`,
+        [movimientoId, loteId, cantidad],
+      );
+    }
+
+    await client.query("COMMIT");
+    return { movimientoId, articuloId, cantidadTotal };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Registra una merma de forma atómica, igual que una salida pero con
  * motivo obligatorio en vez de destino (RF-06).
@@ -134,10 +170,10 @@ async function obtenerStockArticulo(articuloId) {
   return rows[0] || null;
 }
 
-module.exports = { obtenerLotesConStock, registrarSalida };
 module.exports = {
   obtenerLotesConStock,
   registrarSalida,
   obtenerStockArticulo,
   registrarMerma,
+  registrarExcedente,
 };
