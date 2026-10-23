@@ -1,0 +1,98 @@
+.operativo-pagina {
+    min-height: calc(100vh - 94px);
+    padding: 85px 24px;
+    background:
+        radial-gradient(ellipse at 100% 0%,
+            rgba(241, 205, 183, 0.35),
+            transparent 45%),
+        var(--crema-claro);
+}
+
+.operativo-contenedor {
+    width: min(1100px, 100%);
+    margin: auto;
+}
+
+.operativo-contenedor .inv-descripcion {
+    max-width: 650px;
+    margin-bottom: 40px;
+}
+
+.operativo-opciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.operativo-tarjeta {
+    position: relative;
+    min-height: 245px;
+    padding: 32px;
+    border: 1px solid var(--crema);
+    border-radius: 23px;
+    background: white;
+    text-align: left;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.operativo-tarjeta:nth-child(2) {
+    background: #E8EADD;
+}
+
+.operativo-tarjeta:nth-child(3) {
+    background: #F7E7DD;
+}
+
+.operativo-tarjeta:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(81, 72, 62, .08);
+}
+
+.operativo-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    margin-bottom: 23px;
+    border-radius: 15px;
+    background: var(--crema);
+    color: var(--verde-oscuro);
+    font-size: 26px;
+}
+
+.operativo-tarjeta h2 {
+    margin-bottom: 12px;
+    font-family: "DM Serif Display", serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--texto);
+}
+
+.operativo-tarjeta p {
+    color: var(--texto-suave);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.operativo-flecha {
+    position: absolute;
+    right: 28px;
+    top: 28px;
+    color: var(--verde-oscuro);
+    font-size: 22px;
+}
+
+@media (max-width: 800px) {
+    .operativo-opciones {
+        grid-template-columns: 1fr;
+    }
+
+    .operativo-pagina {
+        padding: 55px 20px;
+    }
+
+    .operativo-tarjeta {
+        min-height: 200px;
+    }
+}

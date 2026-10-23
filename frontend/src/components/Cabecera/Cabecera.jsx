@@ -2,9 +2,14 @@
 import { useState } from "react";
 import "./Cabecera.css";
 
-function Cabecera({ paginaActual, navegar, usuarioActual,
+function Cabecera({
+    paginaActual,
+    navegar,
+    usuarioActual,
     esAdmin,
-    cerrarSesion, }) {
+    puedeVerAlmacen,
+    cerrarSesion,
+}) {
     const [menuAbierto, setMenuAbierto] = useState(false);
 
     const cambiarPagina = (pagina) => {
@@ -65,25 +70,27 @@ function Cabecera({ paginaActual, navegar, usuarioActual,
                         }`}
                     aria-label="Navegación principal"
                 >
-                    {esAdmin && (
-                        <>
-                            <button
-                                className={`cabecera-enlace ${paginaActual === "almacen" ? "activo" : ""
-                                    }`}
-                                onClick={() => cambiarPagina("almacen")}
-                            >
-                                Almacén
-                            </button>
 
-                            <button
-                                className={`cabecera-enlace ${paginaActual === "roles" ? "activo" : ""
-                                    }`}
-                                onClick={() => cambiarPagina("roles")}
-                            >
-                                Gestión de roles
-                            </button>
-                        </>
+                    {puedeVerAlmacen && (
+                        <button
+                            className={`cabecera-enlace ${paginaActual === "almacen" ? "activo" : ""
+                                }`}
+                            onClick={() => cambiarPagina("almacen")}
+                        >
+                            Almacén
+                        </button>
                     )}
+
+                    {esAdmin && (
+                        <button
+                            className={`cabecera-enlace ${paginaActual === "roles" ? "activo" : ""
+                                }`}
+                            onClick={() => cambiarPagina("roles")}
+                        >
+                            Gestión de roles
+                        </button>
+                    )}
+
 
                     {usuarioActual ? (
                         <div className="cabecera-sesion">
@@ -94,13 +101,15 @@ function Cabecera({ paginaActual, navegar, usuarioActual,
 
                                 <span className="cabecera-usuario-info">
                                     <strong>{usuarioActual.nombre}</strong>
+
                                     <small>
-                                        {usuarioActual.rol === "admin"
+                                        {usuarioActual.rol === "Administradora"
                                             ? "Administradora"
-                                            : usuarioActual.rol === "personal"
-                                                ? "Personal"
-                                                : "Visitante"}
+                                            : usuarioActual.rol === "Almacen_Cocina"
+                                                ? "Almacén / Cocina"
+                                                : "Recepción"}
                                     </small>
+
                                 </span>
                             </div>
 

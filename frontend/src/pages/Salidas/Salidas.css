@@ -1,0 +1,39 @@
+.salidas-pagina .inv-tarjeta {
+    max-width: 820px;
+}
+
+.salidas-disponibilidad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 22px;
+    border-radius: 13px;
+    background: #E8F2E5;
+    color: #50704B;
+}
+
+.salidas-disponibilidad span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.salidas-disponibilidad strong {
+    font-family: "DM Serif Display", serif;
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.salidas-cancelar {
+    padding: 14px 23px;
+    border: 1px solid var(--salvia-claro);
+    border-radius: 100px;
+    background: transparent;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.salidas-cancelar:hover {
+    background: var(--crema);
+}

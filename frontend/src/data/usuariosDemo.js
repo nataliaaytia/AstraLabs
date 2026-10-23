@@ -1,13 +1,14 @@
+
 export const ROLES = {
-    ADMIN: "admin",
-    PERSONAL: "personal",
-    VISITANTE: "visitante",
+    ADMIN: "Administradora",
+    RECEPCION: "Recepcion",
+    ALMACEN: "Almacen_Cocina",
 };
 
 export const ETIQUETAS_ROLES = {
-    admin: "Administradora",
-    personal: "Personal",
-    visitante: "Visitante",
+    Administradora: "Administradora",
+    Recepcion: "Recepción",
+    Almacen_Cocina: "Almacén / Cocina",
 };
 
 export const USUARIOS_DEMO = [
@@ -20,16 +21,16 @@ export const USUARIOS_DEMO = [
     },
     {
         id: 2,
-        nombre: "Personal Amandita",
-        correo: "personal@amandita.com",
+        nombre: "Personal de Recepción",
+        correo: "recepcion@amandita.com",
         contrasena: "Amandita123",
-        rol: ROLES.PERSONAL,
+        rol: ROLES.RECEPCION,
     },
     {
         id: 3,
-        nombre: "Visitante Amandita",
-        correo: "visita@amandita.com",
+        nombre: "Personal de Almacén",
+        correo: "almacen@amandita.com",
         contrasena: "Amandita123",
-        rol: ROLES.VISITANTE,
+        rol: ROLES.ALMACEN,
     },
 ];

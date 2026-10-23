@@ -57,16 +57,16 @@ function GestionRoles({
                     </div>
 
                     <div className="roles-resumen-item">
-                        <span>Personal</span>
+                        <span>Almacen / Cocina</span>
                         <strong>
-                            {usuarios.filter((u) => u.rol === ROLES.PERSONAL).length}
+                            {usuarios.filter((u) => u.rol === ROLES.ALMACEN).length}
                         </strong>
                     </div>
 
                     <div className="roles-resumen-item">
-                        <span>Visitantes</span>
+                        <span>Recepcion</span>
                         <strong>
-                            {usuarios.filter((u) => u.rol === ROLES.VISITANTE).length}
+                            {usuarios.filter((u) => u.rol === ROLES.RECEPCION).length}
                         </strong>
                     </div>
                 </div>
@@ -136,7 +136,12 @@ function GestionRoles({
 
                                             <td>
                                                 <span
-                                                    className={`roles-badge roles-badge-${usuario.rol}`}
+                                                    className={`roles-badge ${usuario.rol === ROLES.ADMIN
+                                                        ? "roles-badge-admin"
+                                                        : usuario.rol === ROLES.ALMACEN
+                                                            ? "roles-badge-personal"
+                                                            : "roles-badge-visitante"
+                                                        }`}
                                                 >
                                                     {ETIQUETAS_ROLES[usuario.rol]}
                                                 </span>
@@ -157,17 +162,19 @@ function GestionRoles({
                                                             : "Seleccionar un rol"
                                                     }
                                                 >
+
                                                     <option value={ROLES.ADMIN}>
                                                         Administradora
                                                     </option>
 
-                                                    <option value={ROLES.PERSONAL}>
-                                                        Personal
+                                                    <option value={ROLES.RECEPCION}>
+                                                        Recepción
                                                     </option>
 
-                                                    <option value={ROLES.VISITANTE}>
-                                                        Visitante
+                                                    <option value={ROLES.ALMACEN}>
+                                                        Almacén / Cocina
                                                     </option>
+
                                                 </select>
 
                                                 {esCuentaActual && (
@@ -192,26 +199,26 @@ function GestionRoles({
                             <span className="roles-permiso-icono">✿</span>
                             <h3>Administradora</h3>
                             <p>
-                                Acceso al inicio, almacén y gestión de roles.
-                                Puede asignar permisos a otros usuarios.
+                                Puede registrar artículos, gestionar roles,
+                                consultar existencias y registrar excedentes.
                             </p>
                         </div>
 
                         <div className="roles-permiso-card">
                             <span className="roles-permiso-icono">♡</span>
-                            <h3>Personal</h3>
+                            <h3>Almacen / Cocina </h3>
                             <p>
-                                Puede iniciar sesión y visualizar el inicio.
-                                No puede acceder al almacén ni gestionar roles.
+                                Puede consultar el stock, registrar salidas
+                                y documentar mermas del inventario.
                             </p>
                         </div>
 
                         <div className="roles-permiso-card">
                             <span className="roles-permiso-icono">✧</span>
-                            <h3>Visitante</h3>
+                            <h3>Recepcion</h3>
                             <p>
-                                Puede consultar el contenido público,
-                                sin acceso a funciones administrativas.
+                                Puede iniciar sesión y acceder a las
+                                funcionalidades públicas del sistema.
                             </p>
                         </div>
                     </div>
