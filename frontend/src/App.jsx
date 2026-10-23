@@ -4,6 +4,7 @@ import { useState } from "react";
 import Cabecera from "./components/Cabecera/Cabecera";
 import Home from "./pages/Home/Home";
 import Almacen from "./pages/Almacen/Almacen";
+import PanelOperativo from "./pages/Almacen/PanelOperativo";
 import Login from "./pages/Login/Login";
 
 import GestionRoles from "./pages/GestionRoles/GestionRoles";
@@ -50,25 +51,31 @@ function App() {
     usuarios.find((u) => u.id === sesionId) || null;
 
   const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
+  const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
+  const puedeVerAlmacen = esAdmin || esAlmacen;
+
 
   const navegar = (pagina) => {
-    if (
-      ["almacen", "roles", "stock", "salidas", "mermas"].includes(pagina) &&
-      !esAdmin
-    ) {
-      setPaginaActual(usuarioActual ? "home" : "login");
-      window.scrollTo(0, 0);
-      return;
-    }
+    const permisos = {
+      home: true,
+      login: !usuarioActual,
+      almacen: puedeVerAlmacen,
+      roles: esAdmin,
+      stock: puedeVerAlmacen,
+      salidas: esAlmacen,
+      mermas: esAlmacen,
+    };
 
-    if (pagina === "login" && usuarioActual) {
+    if (!permisos[pagina]) {
       setPaginaActual("home");
+      window.scrollTo(0, 0);
       return;
     }
 
     setPaginaActual(pagina);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const iniciarSesion = (correo, contrasena) => {
     const usuario = usuarios.find(
@@ -154,10 +161,18 @@ function App() {
 
   const mostrarPagina = () => {
     switch (paginaActual) {
+
       case "almacen":
-        return esAdmin
-          ? <Almacen navegar={navegar} />
-          : <Home navegar={navegar} />;
+        if (esAdmin) {
+          return <Almacen navegar={navegar} />;
+        }
+
+        if (esAlmacen) {
+          return <PanelOperativo navegar={navegar} />;
+        }
+
+        return <Home navegar={navegar} />;
+
 
       case "roles":
         return esAdmin ? (
@@ -180,13 +195,14 @@ function App() {
           />
         );
 
+
       case "stock":
-        return esAdmin
+        return puedeVerAlmacen
           ? <Stock navegar={navegar} />
           : <Home navegar={navegar} />;
 
       case "salidas":
-        return esAdmin
+        return esAlmacen
           ? (
             <Salidas
               navegar={navegar}
@@ -196,7 +212,7 @@ function App() {
           : <Home navegar={navegar} />;
 
       case "mermas":
-        return esAdmin
+        return esAlmacen
           ? (
             <Mermas
               navegar={navegar}
@@ -206,6 +222,7 @@ function App() {
           : <Home navegar={navegar} />;
 
 
+
       default:
         return <Home navegar={navegar} />;
     }
@@ -213,13 +230,16 @@ function App() {
 
   return (
     <div className="app">
+
       <Cabecera
         paginaActual={paginaActual}
         navegar={navegar}
         usuarioActual={usuarioActual}
         esAdmin={esAdmin}
+        puedeVerAlmacen={puedeVerAlmacen}
         cerrarSesion={cerrarSesion}
       />
+
 
       <main className="app-contenido">
         {mostrarPagina()}
