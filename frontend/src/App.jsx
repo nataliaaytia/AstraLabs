@@ -9,6 +9,12 @@ import Login from "./pages/Login/Login";
 import GestionRoles from "./pages/GestionRoles/GestionRoles";
 import { USUARIOS_DEMO, ROLES } from "./data/usuariosDemo";
 
+
+import Stock from "./pages/Stock/Stock";
+import Salidas from "./pages/Salidas/Salidas";
+import Mermas from "./pages/Mermas/Mermas";
+
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -47,7 +53,7 @@ function App() {
 
   const navegar = (pagina) => {
     if (
-      (pagina === "almacen" || pagina === "roles") &&
+      ["almacen", "roles", "stock", "salidas", "mermas"].includes(pagina) &&
       !esAdmin
     ) {
       setPaginaActual(usuarioActual ? "home" : "login");
@@ -173,6 +179,33 @@ function App() {
             iniciarSesion={iniciarSesion}
           />
         );
+
+
+      case "stock":
+        return esAdmin
+          ? <Stock navegar={navegar} />
+          : <Home navegar={navegar} />;
+
+      case "salidas":
+        return esAdmin
+          ? (
+            <Salidas
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          )
+          : <Home navegar={navegar} />;
+
+      case "mermas":
+        return esAdmin
+          ? (
+            <Mermas
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          )
+          : <Home navegar={navegar} />;
+
 
       default:
         return <Home navegar={navegar} />;
