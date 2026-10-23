@@ -180,7 +180,6 @@ function App() {
           />
         );
 
-
       case "stock":
         return esAdmin
           ? <Stock navegar={navegar} />
