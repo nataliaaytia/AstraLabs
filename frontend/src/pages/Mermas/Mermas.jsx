@@ -46,10 +46,12 @@ function Mermas({ navegar, usuarioActual }) {
     const guardarMerma = async (e) => {
         e.preventDefault();
 
-        const articuloId = Number(formulario.articuloId);
+        //const articuloId = Number(formulario.articuloId);
+        const articuloId = formulario.articuloId;
         const cantidad = Number(formulario.cantidad);
 
-        if (!Number.isInteger(articuloId) || articuloId <= 0) {
+        //if (!Number.isInteger(articuloId) || articuloId <= 0) {
+        if (!articuloId) {
             setMensaje({ tipo: "error", texto: "Selecciona un artículo." });
             return;
         }
@@ -118,6 +120,7 @@ function Mermas({ navegar, usuarioActual }) {
                 >
                     ← Volver al almacén
                 </button>
+                <br></br>
 
                 <span className="inv-etiqueta">
                     ✦ CASA AMANDITA · MOVIMIENTOS

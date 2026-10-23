@@ -55,9 +55,11 @@ function Salidas({ navegar, usuarioActual }) {
         e.preventDefault();
 
         const cantidad = Number(formulario.cantidad);
-        const articuloId = Number(formulario.articuloId);
+        //const articuloId = Number(formulario.articuloId);
+        const articuloId = formulario.articuloId;
 
-        if (!Number.isInteger(articuloId) || articuloId <= 0) {
+        if (!articuloId) {
+            //if (!Number.isInteger(articuloId) || articuloId <= 0) {
             setMensaje({ tipo: "error", texto: "Selecciona un artículo." });
             return;
         }
@@ -135,6 +137,8 @@ function Salidas({ navegar, usuarioActual }) {
                 >
                     ← Volver al almacén
                 </button>
+
+                <br></br>
 
                 <span className="inv-etiqueta">
                     ✦ CASA AMANDITA · MOVIMIENTOS

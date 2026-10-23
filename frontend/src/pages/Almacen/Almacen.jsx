@@ -151,14 +151,30 @@ function Almacen({ navegar }) {
         <section className="almacen-pagina">
             <div className="almacen-contenedor">
 
+                <div className="almacen-encabezado">
+                    <div>
+                        <span className="almacen-etiqueta">
+                            ✦ CASA AMANDITA · GESTIÓN DE INVENTARIO
+                        </span>
 
-                {/* ACCESOS A FUNCIONALIDADES DEL ALMACÉN */}
+                        <h1>
+                            Nuestro <em>almacén</em>
+                        </h1>
+
+                        <p>
+                            Cada recurso cuenta. Organicemos con cariño
+                            los artículos que acompañan el bienestar
+                            de nuestra familia.
+                        </p>
+                    </div>
+                </div>
+
                 <div className="almacen-accesos">
                     <button
                         className="almacen-acceso"
                         onClick={() => navegar("stock")}
                     >
-                        <span className="almacen-acceso-icono">▦</span>
+                        <span className="almacen-acceso-icono">✧</span>
                         <strong>Control de stock</strong>
                         <small>Consultar existencias y alertas</small>
                         <span className="almacen-acceso-flecha">↗</span>
@@ -168,7 +184,7 @@ function Almacen({ navegar }) {
                         className="almacen-acceso"
                         onClick={() => navegar("salidas")}
                     >
-                        <span className="almacen-acceso-icono">↗</span>
+                        <span className="almacen-acceso-icono">꩜</span>
                         <strong>Registrar salidas</strong>
                         <small>Controlar artículos utilizados</small>
                         <span className="almacen-acceso-flecha">↗</span>
@@ -187,21 +203,6 @@ function Almacen({ navegar }) {
 
 
                 <div className="almacen-encabezado">
-                    <div>
-                        <span className="almacen-etiqueta">
-                            ✦ CASA AMANDITA · GESTIÓN DE INVENTARIO
-                        </span>
-
-                        <h1>
-                            Nuestro <em>almacén</em>
-                        </h1>
-
-                        <p>
-                            Cada recurso cuenta. Organicemos con cariño
-                            los artículos que acompañan el bienestar
-                            de nuestra familia.
-                        </p>
-                    </div>
 
                     <button
                         className="almacen-nuevo"
