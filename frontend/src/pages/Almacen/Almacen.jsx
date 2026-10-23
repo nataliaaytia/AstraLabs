@@ -179,26 +179,6 @@ function Almacen({ navegar }) {
                         <small>Consultar existencias y alertas</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
-
-                    <button
-                        className="almacen-acceso"
-                        onClick={() => navegar("salidas")}
-                    >
-                        <span className="almacen-acceso-icono">꩜</span>
-                        <strong>Registrar salidas</strong>
-                        <small>Controlar artículos utilizados</small>
-                        <span className="almacen-acceso-flecha">↗</span>
-                    </button>
-
-                    <button
-                        className="almacen-acceso"
-                        onClick={() => navegar("mermas")}
-                    >
-                        <span className="almacen-acceso-icono">✿</span>
-                        <strong>Registrar mermas</strong>
-                        <small>Documentar pérdidas de artículos</small>
-                        <span className="almacen-acceso-flecha">↗</span>
-                    </button>
                 </div>
 
 

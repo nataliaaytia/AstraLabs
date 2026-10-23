@@ -7,13 +7,13 @@ function PanelOperativo({ navegar }) {
         {
             titulo: "Consultar stock",
             descripcion: "Revisa las existencias de los artículos.",
-            icono: "▦",
+            icono: "✧",
             pagina: "stock",
         },
         {
             titulo: "Registrar salida",
             descripcion: "Registra el consumo y destino de los artículos.",
-            icono: "↗",
+            icono: "꩜",
             pagina: "salidas",
         },
         {
