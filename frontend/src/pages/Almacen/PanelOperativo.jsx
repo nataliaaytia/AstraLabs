@@ -1,5 +1,6 @@
 
 import "./PanelOperativo.css";
+import "../InventarioComun.css";
 
 function PanelOperativo({ navegar }) {
     const opciones = [
