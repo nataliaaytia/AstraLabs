@@ -89,10 +89,10 @@ async function registrarExcedente({
     );
     const movimientoId = movRows[0].id;
 
-    for (const { loteId, cantidad } of movimientosFEFO) {
+    for (const { lote_id, cantidad_descontada } of movimientosFEFO) {
       await client.query(
         `INSERT INTO movimiento_lotes (movimiento_id, lote_id, cantidad) VALUES ($1, $2, $3)`,
-        [movimientoId, loteId, cantidad],
+        [movimientoId, lote_id, cantidad_descontada],
       );
     }
 

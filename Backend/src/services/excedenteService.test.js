@@ -30,7 +30,7 @@ describe("Servicio de Excedentes (RF-09)", () => {
         cantidadTotal: 4,
         usuarioId: 1,
         destino: "Donación - Casa Hermana",
-        movimientosFEFO: [{ loteId: 1, cantidad: 4 }],
+        movimientosFEFO: [{ lote_id: 1, cantidad_descontada: 4 }],
       }),
     );
   });
