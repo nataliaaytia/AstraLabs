@@ -1,0 +1,183 @@
+.inv-pagina {
+    min-height: calc(100vh - 94px);
+    padding: 65px 24px 90px;
+    background:
+        radial-gradient(ellipse at 100% 0%,
+            rgba(241, 205, 183, .3),
+            transparent 43%),
+        var(--crema-claro);
+}
+
+.inv-contenedor {
+    width: min(1080px, 100%);
+    margin: 0 auto;
+}
+
+.inv-volver {
+    border: none;
+    background: transparent;
+    color: var(--verde-oscuro);
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 28px;
+}
+
+.inv-etiqueta {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--verde-oscuro);
+}
+
+.inv-titulo {
+    margin: 16px 0;
+    font-family: "DM Serif Display", serif;
+    font-size: clamp(39px, 5vw, 58px);
+    font-weight: 400;
+    color: var(--texto);
+}
+
+.inv-titulo em {
+    color: var(--verde-oscuro);
+}
+
+.inv-descripcion {
+    max-width: 620px;
+    margin-bottom: 32px;
+    color: var(--texto-suave);
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.inv-tarjeta {
+    padding: 30px;
+    border-radius: 23px;
+    border: 1px solid var(--crema);
+    background: white;
+    box-shadow: 0 15px 50px rgba(81, 72, 62, .04);
+}
+
+.inv-tarjeta h2 {
+    font-family: "DM Serif Display", serif;
+    font-size: 27px;
+    font-weight: 400;
+    color: var(--texto);
+    margin-bottom: 22px;
+}
+
+.inv-formulario {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 23px;
+}
+
+.inv-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.inv-campo label {
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.inv-campo input,
+.inv-campo select {
+    min-height: 47px;
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--crema);
+    border-radius: 11px;
+    background: var(--crema-claro);
+    color: var(--texto);
+    font-size: 13px;
+}
+
+.inv-campo input:focus,
+.inv-campo select:focus {
+    outline: 2px solid var(--salvia);
+    outline-offset: 2px;
+}
+
+.inv-ancho {
+    grid-column: 1 / -1;
+}
+
+.inv-acciones {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid var(--crema);
+}
+
+.inv-boton {
+    padding: 14px 23px;
+    border: none;
+    border-radius: 100px;
+    background: var(--verde-oscuro);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.inv-boton:hover {
+    background: var(--salvia);
+}
+
+.inv-boton:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.inv-mensaje {
+    padding: 15px 18px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.inv-mensaje.exito {
+    background: #E8F2E5;
+    border: 1px solid #BDDBB7;
+    color: #50704B;
+}
+
+.inv-mensaje.error {
+    background: #FFF0EC;
+    border: 1px solid #E9B0A5;
+    color: #A34D41;
+}
+
+.inv-vacio {
+    padding: 45px 20px;
+    color: var(--texto-suave);
+    text-align: center;
+    font-size: 13px;
+}
+
+@media (max-width: 650px) {
+    .inv-pagina {
+        padding: 45px 15px;
+    }
+
+    .inv-tarjeta {
+        padding: 20px 17px;
+    }
+
+    .inv-formulario {
+        grid-template-columns: 1fr;
+    }
+
+    .inv-acciones {
+        flex-direction: column;
+    }
+
+    .inv-boton {
+        width: 100%;
+    }
+}
