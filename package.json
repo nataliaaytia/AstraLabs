@@ -8,8 +8,10 @@
     "dev": "node src/app.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.8",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.13.0"
   },
   "devDependencies": {
