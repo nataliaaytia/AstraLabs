@@ -7,6 +7,7 @@ const stockRouter = require("./routes/stock");
 const mermasRouter = require("./routes/mermas");
 const catalogoRouter = require("./routes/catalogo");
 const excedentesRouter = require("./routes/excedentes");
+const entradasRouter = require("./routes/entradas");
 
 const app = express();
 app.use(cors()); // en producción: restringir a los orígenes reales del frontend
@@ -23,6 +24,7 @@ app.use("/api/articulos", stockRouter);
 app.use("/api/mermas", mermasRouter);
 app.use("/api", catalogoRouter);
 app.use("/api/excedentes", excedentesRouter);
+app.use("/api/entradas", entradasRouter);
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
