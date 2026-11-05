@@ -170,10 +170,75 @@ async function obtenerStockArticulo(articuloId) {
   return rows[0] || null;
 }
 
+/**
+ * Registra una entrada de donación: crea el lote y el movimiento cabecera
+ * en una sola transacción. El trigger de schema.sql es quien suma
+ * cantidad_disponible al insertar en movimiento_lotes (RF-02).
+ *
+ * @param {number} articuloId
+ * @param {number} cantidad
+ * @param {number} usuarioId
+ * @param {number|null} donanteId
+ * @param {string|null} fecha - fecha de ingreso (YYYY-MM-DD); si no se manda, usa CURRENT_DATE
+ * @param {string|null} fechaVencimiento
+ * @param {string|null} numeroLote
+ */
+async function registrarEntrada({
+  articuloId,
+  cantidad,
+  usuarioId,
+  donanteId,
+  fecha,
+  fechaVencimiento,
+  numeroLote,
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows: loteRows } = await client.query(
+      `INSERT INTO lotes (articulo_id, numero_lote, fecha_vencimiento, donante_id, cantidad_inicial, fecha_ingreso)
+       VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
+       RETURNING id`,
+      [
+        articuloId,
+        numeroLote || null,
+        fechaVencimiento || null,
+        donanteId || null,
+        cantidad,
+        fecha || null,
+      ],
+    );
+    const loteId = loteRows[0].id;
+
+    const { rows: movRows } = await client.query(
+      `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, donante_id)
+       VALUES ('entrada', $1, $2, $3, $4)
+       RETURNING id`,
+      [articuloId, cantidad, usuarioId, donanteId || null],
+    );
+    const movimientoId = movRows[0].id;
+
+    await client.query(
+      `INSERT INTO movimiento_lotes (movimiento_id, lote_id, cantidad) VALUES ($1, $2, $3)`,
+      [movimientoId, loteId, cantidad],
+    );
+
+    await client.query("COMMIT");
+    return { movimientoId, loteId, articuloId, cantidadTotal: cantidad };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   obtenerLotesConStock,
   registrarSalida,
   obtenerStockArticulo,
   registrarMerma,
   registrarExcedente,
+  registrarEntrada,
 };
