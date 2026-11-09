@@ -58,7 +58,7 @@ export const inventarioApi = {
 
 
 const CLAVE_STOCK = "amandita_stock_demo_v1";
-const CLAVE_CATALOGO = "amandita_catalogo_demo";
+const CLAVE_CATALOGO = "amandita_catalogo";
 const CLAVE_MOVIMIENTOS = "amandita_movimientos_demo_v1";
 
 const ARTICULOS_INICIALES = [
@@ -199,6 +199,74 @@ function registrarMovimiento(tipo, datos) {
 }
 
 export const inventarioApi = {
+
+    async registrarDonacion(datos) {
+        const inventario = obtenerInventario();
+
+        const articulo = inventario.find(
+            (a) => String(a.id) === String(datos.articuloId)
+        );
+
+        const cantidad = Number(datos.cantidad);
+        const donante = datos.donante?.trim();
+        const fecha = datos.fecha;
+
+        if (!articulo) {
+            throw new Error("Selecciona un artículo válido.");
+        }
+
+        if (!Number.isFinite(cantidad) || cantidad <= 0) {
+            throw new Error("La cantidad debe ser mayor a cero.");
+        }
+
+        if (!donante) {
+            throw new Error("El nombre del donante es obligatorio.");
+        }
+
+        if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            throw new Error("Selecciona una fecha válida.");
+        }
+
+        const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
+
+        const donacion = {
+            id: crypto.randomUUID(),
+            tipo: "donacion",
+            articuloId: articulo.id,
+            articulo: articulo.nombre,
+            cantidad,
+            donante,
+            fecha,
+            fechaRegistro: new Date().toISOString(),
+            usuarioId: datos.usuarioId,
+        };
+
+        articulo.stock_actual = Number(
+            (Number(articulo.stock_actual) + cantidad).toFixed(3)
+        );
+
+        movimientos.unshift(donacion);
+
+        guardarJSON(CLAVE_STOCK, inventario);
+        guardarJSON(CLAVE_MOVIMIENTOS, movimientos);
+
+        return {
+            exito: true,
+            mensaje: "Donación registrada correctamente.",
+            donacion,
+            stockActual: articulo.stock_actual,
+        };
+    },
+
+    async listarDonaciones() {
+        const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
+
+        return movimientos.filter(
+            (movimiento) => movimiento.tipo === "donacion"
+        );
+    },
+
+
     async listarArticulos() {
         return obtenerInventario();
     },
