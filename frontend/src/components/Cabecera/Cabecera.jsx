@@ -8,6 +8,7 @@ function Cabecera({
     usuarioActual,
     esAdmin,
     puedeVerAlmacen,
+    esRecepcion,
     cerrarSesion,
 }) {
     const [menuAbierto, setMenuAbierto] = useState(false);
@@ -80,6 +81,18 @@ function Cabecera({
                             Almacén
                         </button>
                     )}
+
+
+                    {esRecepcion && (
+                        <button
+                            className={`cabecera-enlace ${paginaActual === "donaciones" ? "activo" : ""
+                                }`}
+                            onClick={() => cambiarPagina("donaciones")}
+                        >
+                            Donaciones
+                        </button>
+                    )}
+
 
                     {esAdmin && (
                         <button

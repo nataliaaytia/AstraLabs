@@ -15,6 +15,7 @@ import Stock from "./pages/Stock/Stock";
 import Salidas from "./pages/Salidas/Salidas";
 import Mermas from "./pages/Mermas/Mermas";
 
+import Donaciones from "./pages/Donaciones/Donaciones";
 
 import "./App.css";
 
@@ -52,6 +53,7 @@ function App() {
 
   const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
   const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
+  const esRecepcion = usuarioActual?.rol === ROLES.RECEPCION;
   const puedeVerAlmacen = esAdmin || esAlmacen;
 
 
@@ -64,6 +66,7 @@ function App() {
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
+      donaciones: esRecepcion,
     };
 
     if (!permisos[pagina]) {
@@ -222,6 +225,18 @@ function App() {
           : <Home navegar={navegar} />;
 
 
+      case "donaciones":
+        return esRecepcion
+          ? (
+            <Donaciones
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          )
+          : <Home navegar={navegar} />;
+
+
+
 
       default:
         return <Home navegar={navegar} />;
@@ -237,6 +252,7 @@ function App() {
         usuarioActual={usuarioActual}
         esAdmin={esAdmin}
         puedeVerAlmacen={puedeVerAlmacen}
+        esRecepcion={esRecepcion}
         cerrarSesion={cerrarSesion}
       />
 
