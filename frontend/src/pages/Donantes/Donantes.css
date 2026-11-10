@@ -1,0 +1,185 @@
+.donantes-pagina {
+    background:
+        radial-gradient(ellipse at 100% 0%,
+            rgba(241, 205, 183, .3),
+            transparent 45%),
+        var(--crema-claro);
+}
+
+.donantes-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 17px;
+    margin-bottom: 30px;
+}
+
+.donantes-resumen-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    border: 1px solid var(--crema);
+    border-radius: 19px;
+    background: white;
+}
+
+.donantes-resumen-card span,
+.donantes-resumen-card small {
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.donantes-resumen-card strong {
+    font-family: "DM Serif Display", serif;
+    font-size: 38px;
+    font-weight: 400;
+    color: var(--verde-oscuro);
+}
+
+.donantes-distribucion {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(290px, 1fr);
+    align-items: start;
+    gap: 23px;
+}
+
+.donantes-subtitulo {
+    margin: -8px 0 26px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--texto-suave);
+}
+
+.donantes-nota {
+    margin: 0;
+    color: var(--texto-suave);
+    font-size: 11px;
+}
+
+.donantes-directorio {
+    overflow: hidden;
+    border: 1px solid var(--crema);
+    border-radius: 22px;
+    background: white;
+}
+
+.donantes-directorio-cabecera {
+    padding: 26px;
+    background: #E8EADD;
+}
+
+.donantes-directorio-cabecera>span {
+    color: var(--verde-oscuro);
+    letter-spacing: 2px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.donantes-directorio-cabecera h2 {
+    margin: 12px 0 20px;
+    font-family: "DM Serif Display", serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--texto);
+}
+
+.donantes-directorio-cabecera input {
+    width: 100%;
+    padding: 13px 15px;
+    border: 1px solid var(--crema);
+    border-radius: 12px;
+    background: white;
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.donantes-registro {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 21px;
+    border-bottom: 1px solid var(--crema);
+}
+
+.donantes-registro:last-child {
+    border-bottom: none;
+}
+
+.donantes-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 43px;
+    height: 43px;
+    border-radius: 13px;
+    background: var(--crema);
+    color: var(--verde-oscuro);
+    font-size: 24px;
+}
+
+.donantes-registro-info {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.donantes-registro-info strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--texto);
+    font-size: 13px;
+}
+
+.donantes-registro-info small {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.donantes-registro-info p {
+    margin: 5px 0;
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.donantes-directorio-pie {
+    padding: 20px;
+    border-top: 1px solid var(--crema);
+}
+
+.donantes-directorio-pie button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 30px;
+    background: var(--verde-oscuro);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.donantes-directorio-pie button:hover {
+    background: var(--salvia);
+}
+
+@media (max-width: 850px) {
+    .donantes-distribucion {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .donantes-resumen {
+        grid-template-columns: 1fr;
+    }
+
+    .donantes-directorio-cabecera {
+        padding: 20px;
+    }
+}

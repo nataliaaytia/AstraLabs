@@ -56,10 +56,49 @@ export const inventarioApi = {
 };
 */
 
+import { cargarDonantes } from "../data/donantes";
 
 const CLAVE_STOCK = "amandita_stock_demo_v1";
 const CLAVE_CATALOGO = "amandita_catalogo";
 const CLAVE_MOVIMIENTOS = "amandita_movimientos_demo_v1";
+
+
+const CLAVE_PLANES = "amandita_planes_comida_v1";
+
+const PLANES_INICIALES = [
+    {
+        id: "plan-001",
+        nombre: "Arroz con leche",
+        fecha: "2026-11-10",
+        tipoComida: "Merienda",
+        estado: "confirmado",
+        ingredientes: [
+            { articuloId: "demo-arroz", cantidad: 3 },
+            { articuloId: "demo-leche", cantidad: 2 },
+        ],
+    },
+    {
+        id: "plan-002",
+        nombre: "Almuerzo con arroz",
+        fecha: "2026-11-11",
+        tipoComida: "Almuerzo",
+        estado: "confirmado",
+        ingredientes: [
+            { articuloId: "demo-arroz", cantidad: 4 },
+        ],
+    },
+    {
+        id: "plan-003",
+        nombre: "Merienda de leche",
+        fecha: "2026-11-12",
+        tipoComida: "Merienda",
+        estado: "borrador",
+        ingredientes: [
+            { articuloId: "demo-leche", cantidad: 1 },
+        ],
+    },
+];
+
 
 const ARTICULOS_INICIALES = [
     {
@@ -129,6 +168,24 @@ function obtenerInventario() {
     guardarJSON(CLAVE_STOCK, stock);
     return stock;
 }
+
+
+function obtenerPlanes() {
+    const almacenados = leerJSON(CLAVE_PLANES, null);
+
+    if (Array.isArray(almacenados)) {
+        return almacenados;
+    }
+
+    const iniciales = PLANES_INICIALES.map((plan) => ({
+        ...plan,
+        ingredientes: plan.ingredientes.map((i) => ({ ...i })),
+    }));
+
+    guardarJSON(CLAVE_PLANES, iniciales);
+    return iniciales;
+}
+
 
 function registrarMovimiento(tipo, datos) {
     const inventario = obtenerInventario();
@@ -200,6 +257,160 @@ function registrarMovimiento(tipo, datos) {
 
 export const inventarioApi = {
 
+
+    async listarPlanesComida() {
+        return obtenerPlanes();
+    },
+
+    async prepararPlanComida(planId, usuarioId) {
+        if (!usuarioId) {
+            throw new Error("Debes iniciar sesión.");
+        }
+
+        const planes = obtenerPlanes();
+        const plan = planes.find(
+            (p) => String(p.id) === String(planId)
+        );
+
+        if (!plan) {
+            throw new Error("El plan no existe.");
+        }
+
+        if (plan.estado === "preparado") {
+            throw new Error("Este plan ya fue preparado.");
+        }
+
+        if (plan.estado !== "confirmado") {
+            throw new Error(
+                "Solo puedes preparar planes confirmados."
+            );
+        }
+
+        if (!Array.isArray(plan.ingredientes) ||
+            plan.ingredientes.length === 0) {
+            throw new Error("El plan no tiene ingredientes.");
+        }
+
+        const inventario = obtenerInventario();
+        const cantidades = new Map();
+
+        for (const ingrediente of plan.ingredientes) {
+            const id = String(ingrediente.articuloId);
+            const cantidad = Number(ingrediente.cantidad);
+
+            if (!Number.isFinite(cantidad) || cantidad <= 0) {
+                throw new Error("El plan tiene cantidades inválidas.");
+            }
+
+            cantidades.set(
+                id,
+                (cantidades.get(id) || 0) + cantidad
+            );
+        }
+
+        const descuentos = [];
+
+        for (const [id, cantidad] of cantidades) {
+            const articulo = inventario.find(
+                (a) => String(a.id) === id
+            );
+
+            if (!articulo) {
+                throw new Error(
+                    `No existe el ingrediente con ID ${id}.`
+                );
+            }
+
+            const disponible = Number(articulo.stock_actual);
+
+            if (cantidad > disponible) {
+                throw new Error(
+                    `Stock insuficiente de ${articulo.nombre}. ` +
+                    `Necesitas ${cantidad} y tienes ${disponible}.`
+                );
+            }
+
+            descuentos.push({
+                articuloId: articulo.id,
+                articulo: articulo.nombre,
+                cantidad,
+                stockAnterior: disponible,
+                stockNuevo: Number(
+                    (disponible - cantidad).toFixed(3)
+                ),
+            });
+        }
+
+        const fechaPreparacion = new Date().toISOString();
+
+        const nuevosPlanes = planes.map((p) =>
+            p.id === plan.id
+                ? {
+                    ...p,
+                    estado: "preparado",
+                    fechaPreparacion,
+                    preparadoPor: usuarioId,
+                }
+                : p
+        );
+
+        const nuevoInventario = inventario.map((articulo) => {
+            const descuento = descuentos.find(
+                (d) => String(d.articuloId) === String(articulo.id)
+            );
+
+            return descuento
+                ? { ...articulo, stock_actual: descuento.stockNuevo }
+                : articulo;
+        });
+
+        const movimiento = {
+            id: crypto.randomUUID(),
+            tipo: "preparacion_plan",
+            planId: plan.id,
+            plan: plan.nombre,
+            usuarioId,
+            ingredientes: descuentos,
+            fecha: fechaPreparacion,
+        };
+
+        const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
+
+        // Un único registro local reúne estado, stock y movimiento.
+        const respaldo = {
+            planes: localStorage.getItem(CLAVE_PLANES),
+            stock: localStorage.getItem(CLAVE_STOCK),
+            movimientos: localStorage.getItem(CLAVE_MOVIMIENTOS),
+        };
+
+        try {
+            guardarJSON(CLAVE_STOCK, nuevoInventario);
+            guardarJSON(CLAVE_PLANES, nuevosPlanes);
+            guardarJSON(
+                CLAVE_MOVIMIENTOS,
+                [movimiento, ...movimientos]
+            );
+        } catch (error) {
+            const restaurar = (clave, valor) => {
+                if (valor === null) localStorage.removeItem(clave);
+                else localStorage.setItem(clave, valor);
+            };
+
+            restaurar(CLAVE_STOCK, respaldo.stock);
+            restaurar(CLAVE_PLANES, respaldo.planes);
+            restaurar(CLAVE_MOVIMIENTOS, respaldo.movimientos);
+            throw new Error("No se pudo guardar la preparación.");
+        }
+
+        return {
+            exito: true,
+            plan: plan.nombre,
+            descuentos,
+            fechaPreparacion,
+        };
+    },
+
+
     async registrarDonacion(datos) {
         const inventario = obtenerInventario();
 
@@ -208,8 +419,18 @@ export const inventarioApi = {
         );
 
         const cantidad = Number(datos.cantidad);
-        const donante = datos.donante?.trim();
+
+        const donanteRegistrado = cargarDonantes().find(
+            (d) => d.id === datos.donanteId
+        );
+
+        if (!donanteRegistrado) {
+            throw new Error("El donante no está registrado.");
+        }
+
+        const donante = donanteRegistrado.nombre;
         const fecha = datos.fecha;
+
 
         if (!articulo) {
             throw new Error("Selecciona un artículo válido.");
@@ -235,6 +456,7 @@ export const inventarioApi = {
             articuloId: articulo.id,
             articulo: articulo.nombre,
             cantidad,
+            donanteId: donanteRegistrado.id,
             donante,
             fecha,
             fechaRegistro: new Date().toISOString(),
@@ -322,3 +544,5 @@ export const inventarioApi = {
         return articulo;
     },
 };
+
+

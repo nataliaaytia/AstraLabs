@@ -22,6 +22,14 @@ function PanelOperativo({ navegar }) {
             icono: "✿",
             pagina: "mermas",
         },
+
+        {
+            titulo: "Planes de comida",
+            descripcion: "Confirma la preparación de comidas y descuenta sus ingredientes.",
+            icono: "♧",
+            pagina: "planesComida",
+        },
+
     ];
 
     return (

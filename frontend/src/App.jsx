@@ -17,6 +17,10 @@ import Mermas from "./pages/Mermas/Mermas";
 
 import Donaciones from "./pages/Donaciones/Donaciones";
 
+import Donantes from "./pages/Donantes";
+
+import PlanesComida from "./pages/PlanesComida/PlanesComida";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -66,7 +70,9 @@ function App() {
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
+      planesComida: esAlmacen,
       donaciones: esRecepcion,
+      donantes: esRecepcion,
     };
 
     if (!permisos[pagina]) {
@@ -214,6 +220,17 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
+
+      case "planesComida":
+        return esAlmacen
+          ? (
+            <PlanesComida
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          )
+          : <Home navegar={navegar} />;
+
       case "mermas":
         return esAlmacen
           ? (
@@ -223,7 +240,6 @@ function App() {
             />
           )
           : <Home navegar={navegar} />;
-
 
       case "donaciones":
         return esRecepcion
@@ -235,8 +251,10 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
-
-
+      case "donantes":
+        return esRecepcion
+          ? <Donantes navegar={navegar} />
+          : <Home navegar={navegar} />;
 
       default:
         return <Home navegar={navegar} />;
