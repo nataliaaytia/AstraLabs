@@ -7,4 +7,55 @@ async function listarMenus() {
   return rows;
 }
 
-module.exports = { listarMenus };
+/**
+ * Crea un menú con sus ingredientes en una sola transacción (RF-16).
+ * @param {Array<{articuloId:number, cantidadPorPorcion:number}>} ingredientes
+ */
+async function crearMenu({ nombre, descripcion, ingredientes }) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows: menuRows } = await client.query(
+      `INSERT INTO menus (nombre, descripcion) VALUES ($1, $2) RETURNING id, nombre, descripcion`,
+      [nombre, descripcion || null],
+    );
+    const menu = menuRows[0];
+
+    for (const ing of ingredientes) {
+      await client.query(
+        `INSERT INTO menu_ingredientes (menu_id, articulo_id, cantidad_por_porcion) VALUES ($1, $2, $3)`,
+        [menu.id, ing.articuloId, ing.cantidadPorPorcion],
+      );
+    }
+
+    await client.query("COMMIT");
+    return menu;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function obtenerMenuConIngredientes(menuId) {
+  const menu = await pool.query(
+    `SELECT id, nombre, descripcion FROM menus WHERE id = $1`,
+    [menuId],
+  );
+  if (!menu.rows[0]) return null;
+
+  const ingredientes = await pool.query(
+    `SELECT mi.articulo_id, a.nombre AS articulo, mi.cantidad_por_porcion
+     FROM menu_ingredientes mi
+     JOIN articulos a ON a.id = mi.articulo_id
+     WHERE mi.menu_id = $1
+     ORDER BY a.nombre`,
+    [menuId],
+  );
+
+  return { ...menu.rows[0], ingredientes: ingredientes.rows };
+}
+
+module.exports = { listarMenus, crearMenu, obtenerMenuConIngredientes };
