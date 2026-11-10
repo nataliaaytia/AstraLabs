@@ -17,7 +17,7 @@ import Mermas from "./pages/Mermas/Mermas";
 
 import Donaciones from "./pages/Donaciones/Donaciones";
 
-import Donantes from "./pages/Donantes";
+import Donantes from "./pages/Donantes/Donantes";
 
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
