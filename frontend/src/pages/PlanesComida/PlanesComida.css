@@ -249,3 +249,234 @@
         padding: 20px;
     }
 }
+
+
+/* MODAL DE CONFIRMACIÓN */
+
+.plan-modal-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(38, 38, 34, 0.48);
+    backdrop-filter: blur(5px);
+    animation: planFondo .2s ease;
+}
+
+.plan-modal {
+    position: relative;
+    width: 100%;
+    max-width: 510px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 35px;
+    border: 1px solid var(--crema);
+    border-radius: 25px;
+    background: #fffdfa;
+    box-shadow: 0 25px 80px rgba(30, 30, 25, .18);
+    animation: planAparecer .25s ease;
+}
+
+.plan-modal-cerrar {
+    position: absolute;
+    top: 20px;
+    right: 23px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: var(--crema-claro);
+    color: var(--texto-suave);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.plan-modal-cerrar:hover {
+    background: var(--crema);
+}
+
+.plan-modal-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 23px;
+    border-radius: 18px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 36px;
+}
+
+.plan-modal-etiqueta {
+    color: var(--verde-oscuro);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.plan-modal h2 {
+    margin: 13px 0 17px;
+    font-family: "DM Serif Display", serif;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--texto);
+}
+
+.plan-modal h2 em {
+    color: var(--verde-oscuro);
+}
+
+.plan-modal-descripcion {
+    color: var(--texto-suave);
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.plan-modal-descripcion strong {
+    color: var(--texto);
+}
+
+.plan-modal-ingredientes {
+    margin-top: 25px;
+    padding: 22px;
+    border-radius: 16px;
+    background: var(--crema-claro);
+}
+
+.plan-modal-ingredientes h3 {
+    margin-bottom: 16px;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.plan-modal-ingrediente {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--crema);
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.plan-modal-ingrediente:last-child {
+    border-bottom: none;
+}
+
+.plan-modal-ingrediente strong {
+    color: var(--verde-oscuro);
+    white-space: nowrap;
+}
+
+.plan-modal-aviso {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 16px 18px;
+    border-radius: 13px;
+    background: #E8EADD;
+}
+
+.plan-modal-aviso span {
+    font-size: 20px;
+    color: var(--verde-oscuro);
+}
+
+.plan-modal-aviso p {
+    color: var(--texto);
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+.plan-modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.plan-modal-cancelar,
+.plan-modal-confirmar {
+    flex: 1;
+    min-height: 47px;
+    padding: 13px 20px;
+    border: none;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, transform .2s;
+}
+
+.plan-modal-cancelar {
+    background: var(--crema);
+    color: var(--texto);
+}
+
+.plan-modal-confirmar {
+    background: var(--verde-oscuro);
+    color: white;
+}
+
+.plan-modal-cancelar:hover {
+    background: var(--durazno);
+}
+
+.plan-modal-confirmar:hover {
+    background: var(--salvia);
+    transform: translateY(-2px);
+}
+
+.plan-modal-cancelar:disabled,
+.plan-modal-confirmar:disabled,
+.plan-modal-cerrar:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+@keyframes planFondo {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes planAparecer {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 550px) {
+    .plan-modal {
+        padding: 27px 20px;
+        border-radius: 20px;
+    }
+
+    .plan-modal h2 {
+        font-size: 29px;
+    }
+
+    .plan-modal-acciones {
+        flex-direction: column-reverse;
+    }
+}

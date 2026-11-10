@@ -17,6 +17,7 @@ function PlanesComida({ navegar, usuarioActual }) {
     const [mensaje, setMensaje] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [procesando, setProcesando] = useState(null);
+    const [planAConfirmar, setPlanAConfirmar] = useState(null);
 
     const cargarDatos = async () => {
         const [listaPlanes, listaArticulos] = await Promise.all([
@@ -84,15 +85,11 @@ function PlanesComida({ navegar, usuarioActual }) {
         });
     };
 
-    const prepararPlan = async (plan) => {
-        if (procesando) return;
 
-        const confirmar = window.confirm(
-            `¿Confirmas que se preparó "${plan.nombre}"?\n\n` +
-            "Se descontarán sus ingredientes del inventario."
-        );
+    const prepararPlan = async () => {
+        if (!planAConfirmar || procesando !== null) return;
 
-        if (!confirmar) return;
+        const plan = planAConfirmar;
 
         setProcesando(plan.id);
         setMensaje(null);
@@ -105,6 +102,8 @@ function PlanesComida({ navegar, usuarioActual }) {
 
             await cargarDatos();
 
+            setPlanAConfirmar(null);
+
             setMensaje({
                 tipo: "exito",
                 texto:
@@ -112,6 +111,8 @@ function PlanesComida({ navegar, usuarioActual }) {
                     "Los ingredientes fueron descontados correctamente.",
             });
         } catch (error) {
+            setPlanAConfirmar(null);
+
             setMensaje({
                 tipo: "error",
                 texto: error.message,
@@ -120,6 +121,7 @@ function PlanesComida({ navegar, usuarioActual }) {
             setProcesando(null);
         }
     };
+
 
     const filtrados = planes.filter(
         (plan) => filtro === "todos" || plan.estado === filtro
@@ -323,7 +325,7 @@ function PlanesComida({ navegar, usuarioActual }) {
                                                             procesando !== null
                                                         }
                                                         onClick={() =>
-                                                            prepararPlan(plan)
+                                                            setPlanAConfirmar(plan)
                                                         }
                                                     >
                                                         {procesando === plan.id
@@ -345,6 +347,111 @@ function PlanesComida({ navegar, usuarioActual }) {
                     )}
                 </div>
             </div>
+
+
+            {planAConfirmar && (
+                <div
+                    className="plan-modal-fondo"
+                    onMouseDown={(evento) => {
+                        if (
+                            evento.target === evento.currentTarget &&
+                            procesando === null
+                        ) {
+                            setPlanAConfirmar(null);
+                        }
+                    }}
+                >
+                    <div
+                        className="plan-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="plan-modal-titulo"
+                    >
+                        <button
+                            type="button"
+                            className="plan-modal-cerrar"
+                            onClick={() => setPlanAConfirmar(null)}
+                            disabled={procesando !== null}
+                            aria-label="Cerrar modal"
+                        >
+                            ×
+                        </button>
+
+                        <div className="plan-modal-icono">
+                            ♡
+                        </div>
+
+                        <span className="plan-modal-etiqueta">
+                            ✦ CONFIRMACIÓN DE PREPARACIÓN
+                        </span>
+
+                        <h2 id="plan-modal-titulo">
+                            ¿Confirmar <em>preparación?</em>
+                        </h2>
+
+                        <p className="plan-modal-descripcion">
+                            Estás a punto de marcar
+                            <strong> {planAConfirmar.nombre} </strong>
+                            como preparado.
+                            Los siguientes ingredientes se descontarán
+                            automáticamente del inventario.
+                        </p>
+
+                        <div className="plan-modal-ingredientes">
+                            <h3>Ingredientes a descontar</h3>
+
+                            {listaIngredientes(planAConfirmar).map(
+                                (ingrediente) => (
+                                    <div
+                                        className="plan-modal-ingrediente"
+                                        key={ingrediente.articuloId}
+                                    >
+                                        <span>{ingrediente.nombre}</span>
+
+                                        <strong>
+                                            −{ingrediente.cantidad}
+                                            {" "}
+                                            {ingrediente.unidad}
+                                        </strong>
+                                    </div>
+                                )
+                            )}
+                        </div>
+
+                        <div className="plan-modal-aviso">
+                            <span>✦</span>
+                            <p>
+                                Una vez confirmado, este plan quedará
+                                registrado como preparado y no podrá
+                                descontarse nuevamente.
+                            </p>
+                        </div>
+
+                        <div className="plan-modal-acciones">
+                            <button
+                                type="button"
+                                className="plan-modal-cancelar"
+                                onClick={() => setPlanAConfirmar(null)}
+                                disabled={procesando !== null}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="plan-modal-confirmar"
+                                onClick={prepararPlan}
+                                disabled={procesando !== null}
+                            >
+                                {procesando !== null
+                                    ? "Registrando..."
+                                    : "Sí, confirmar ✓"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </section>
     );
 }

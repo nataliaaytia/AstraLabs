@@ -228,8 +228,6 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
-
-
       case "mermas":
         return esAlmacen
           ? (
