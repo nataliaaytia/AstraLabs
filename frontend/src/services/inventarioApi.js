@@ -57,6 +57,7 @@ export const inventarioApi = {
 */
 
 import { cargarDonantes } from "../data/donantes";
+import { cargarMenus } from "../data/menus";
 
 const CLAVE_STOCK = "amandita_stock_demo_v1";
 const CLAVE_CATALOGO = "amandita_catalogo";
@@ -256,6 +257,80 @@ function registrarMovimiento(tipo, datos) {
 }
 
 export const inventarioApi = {
+
+
+    async crearPlanDesdeMenu(datos) {
+        const menus = cargarMenus();
+
+        const menu = menus.find(
+            (m) => String(m.id) === String(datos.menuId)
+        );
+
+        if (!menu) {
+            throw new Error("Selecciona un menú registrado.");
+        }
+
+        const porciones = Number(datos.porciones);
+
+        if (!Number.isInteger(porciones) || porciones <= 0) {
+            throw new Error(
+                "La cantidad de porciones debe ser un entero positivo."
+            );
+        }
+
+        if (!datos.fecha ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(datos.fecha)) {
+            throw new Error("Selecciona una fecha válida.");
+        }
+
+        const inventario = obtenerInventario();
+
+        const ingredientes = menu.ingredientes.map((ingrediente) => {
+            const articulo = inventario.find(
+                (a) => String(a.id) === String(ingrediente.articuloId)
+            );
+
+            if (!articulo) {
+                throw new Error(
+                    "Uno de los ingredientes ya no está disponible."
+                );
+            }
+
+            const cantidadTotal = Number(
+                (Number(ingrediente.cantidadPorPorcion) * porciones)
+                    .toFixed(3)
+            );
+
+            if (cantidadTotal <= 0) {
+                throw new Error(
+                    "La cantidad total de un ingrediente es inválida."
+                );
+            }
+
+            return {
+                articuloId: articulo.id,
+                cantidad: cantidadTotal,
+            };
+        });
+
+        const planes = obtenerPlanes();
+
+        const nuevoPlan = {
+            id: crypto.randomUUID(),
+            menuId: menu.id,
+            nombre: menu.nombre,
+            fecha: datos.fecha,
+            tipoComida: menu.tipoComida,
+            porciones,
+            estado: "confirmado",
+            ingredientes,
+            fechaRegistro: new Date().toISOString(),
+        };
+
+        guardarJSON(CLAVE_PLANES, [nuevoPlan, ...planes]);
+
+        return nuevoPlan;
+    },
 
 
     async listarPlanesComida() {

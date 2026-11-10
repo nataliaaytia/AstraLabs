@@ -480,3 +480,52 @@
         flex-direction: column-reverse;
     }
 }
+
+
+.planes-nuevo-plan {
+    margin-bottom: 30px;
+}
+
+.planes-nuevo-plan-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.planes-nuevo-plan-titulo h2 {
+    margin: 12px 0;
+    font-family: "DM Serif Display", serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--texto);
+}
+
+.planes-nuevo-plan-titulo p {
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.planes-ir-recetario {
+    padding: 12px 17px;
+    border: 1px solid var(--salvia-claro);
+    border-radius: 30px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.planes-ir-recetario:hover {
+    background: var(--salvia-claro);
+}
+
+@media (max-width: 650px) {
+    .planes-nuevo-plan-titulo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

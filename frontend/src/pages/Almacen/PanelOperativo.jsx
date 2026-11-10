@@ -30,6 +30,15 @@ function PanelOperativo({ navegar }) {
             pagina: "planesComida",
         },
 
+
+        {
+            titulo: "Recetario de menús",
+            descripcion: "Registra recetas e ingredientes por porción.",
+            icono: "♧",
+            pagina: "menus",
+        },
+
+
     ];
 
     return (

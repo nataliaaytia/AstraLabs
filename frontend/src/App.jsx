@@ -21,6 +21,8 @@ import Donantes from "./pages/Donantes/Donantes";
 
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
+import Menus from "./pages/Menus/Menus";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -71,6 +73,7 @@ function App() {
       salidas: esAlmacen,
       mermas: esAlmacen,
       planesComida: esAlmacen,
+      menus: esAlmacen,
       donaciones: esRecepcion,
       donantes: esRecepcion,
     };
@@ -230,6 +233,13 @@ function App() {
             />
           )
           : <Home navegar={navegar} />;
+
+
+      case "menus":
+        return esAlmacen
+          ? <Menus navegar={navegar} />
+          : <Home navegar={navegar} />;
+
 
       case "mermas":
         return esAlmacen

@@ -1,6 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
+
+import { cargarMenus } from "../../data/menus";
+
 import "../InventarioComun.css";
 import "./PlanesComida.css";
 
@@ -11,7 +14,15 @@ const ESTADOS = {
 };
 
 function PlanesComida({ navegar, usuarioActual }) {
-    const [planes, setPlanes] = useState([]);
+
+    const [menusDisponibles, setMenusDisponibles] = useState(cargarMenus);
+    const [nuevoPlan, setNuevoPlan] = useState({
+        menuId: "",
+        porciones: "10",
+        fecha: new Date().toLocaleDateString("en-CA"),
+    });
+    const [creandoPlan, setCreandoPlan] = useState(false);
+
     const [articulos, setArticulos] = useState([]);
     const [filtro, setFiltro] = useState("todos");
     const [mensaje, setMensaje] = useState(null);
@@ -61,6 +72,44 @@ function PlanesComida({ navegar, usuarioActual }) {
             activo = false;
         };
     }, []);
+
+
+    const guardarNuevoPlan = async (evento) => {
+        evento.preventDefault();
+
+        if (creandoPlan) return;
+
+        setCreandoPlan(true);
+        setMensaje(null);
+
+        try {
+            const creado = await inventarioApi.crearPlanDesdeMenu(nuevoPlan);
+
+            await cargarDatos();
+            setMenusDisponibles(cargarMenus());
+
+            setNuevoPlan({
+                menuId: "",
+                porciones: "10",
+                fecha: new Date().toLocaleDateString("en-CA"),
+            });
+
+            setMensaje({
+                tipo: "exito",
+                texto:
+                    `El plan "${creado.nombre}" se creó para ` +
+                    `${creado.porciones} porciones.`,
+            });
+        } catch (error) {
+            setMensaje({
+                tipo: "error",
+                texto: error.message,
+            });
+        } finally {
+            setCreandoPlan(false);
+        }
+    };
+
 
     const obtenerArticulo = (id) =>
         articulos.find((a) => String(a.id) === String(id));
@@ -172,6 +221,119 @@ function PlanesComida({ navegar, usuarioActual }) {
                     preparación. Cada ingrediente utilizado se
                     descontará automáticamente del inventario.
                 </p>
+
+
+                <div className="inv-tarjeta planes-nuevo-plan">
+                    <div className="planes-nuevo-plan-titulo">
+                        <div>
+                            <span className="inv-etiqueta">
+                                ✦ PLANIFICACIÓN
+                            </span>
+                            <h2>Crear plan desde un menú</h2>
+                            <p>
+                                Reutiliza una receta y calcula los ingredientes
+                                según las porciones.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="planes-ir-recetario"
+                            onClick={() => navegar("menus")}
+                        >
+                            ＋ Registrar menú
+                        </button>
+                    </div>
+
+                    <form
+                        className="inv-formulario"
+                        onSubmit={guardarNuevoPlan}
+                    >
+                        <div className="inv-campo inv-ancho">
+                            <label htmlFor="plan-menu">
+                                Menú registrado *
+                            </label>
+
+                            <select
+                                id="plan-menu"
+                                value={nuevoPlan.menuId}
+                                onChange={(e) =>
+                                    setNuevoPlan((anterior) => ({
+                                        ...anterior,
+                                        menuId: e.target.value,
+                                    }))
+                                }
+                                required
+                            >
+                                <option value="">
+                                    Seleccionar menú
+                                </option>
+
+                                {menusDisponibles.map((menu) => (
+                                    <option key={menu.id} value={menu.id}>
+                                        {menu.nombre} · {menu.tipoComida}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="inv-campo">
+                            <label htmlFor="plan-porciones">
+                                Número de porciones *
+                            </label>
+
+                            <input
+                                id="plan-porciones"
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={nuevoPlan.porciones}
+                                onChange={(e) =>
+                                    setNuevoPlan((anterior) => ({
+                                        ...anterior,
+                                        porciones: e.target.value,
+                                    }))
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div className="inv-campo">
+                            <label htmlFor="plan-fecha">
+                                Fecha *
+                            </label>
+
+                            <input
+                                id="plan-fecha"
+                                type="date"
+                                value={nuevoPlan.fecha}
+                                onChange={(e) =>
+                                    setNuevoPlan((anterior) => ({
+                                        ...anterior,
+                                        fecha: e.target.value,
+                                    }))
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div className="inv-acciones">
+                            <button
+                                type="submit"
+                                className="inv-boton"
+                                disabled={
+                                    creandoPlan ||
+                                    menusDisponibles.length === 0
+                                }
+                            >
+                                {creandoPlan
+                                    ? "Creando..."
+                                    : "Crear plan confirmado →"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
 
                 <div className="planes-resumen">
                     <div className="planes-resumen-card">
