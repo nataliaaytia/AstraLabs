@@ -10,6 +10,8 @@ const excedentesRouter = require("./routes/excedentes");
 const entradasRouter = require("./routes/entradas");
 const donantesRouter = require("./routes/donantes");
 const reportesRouter = require("./routes/reportes");
+const menusRouter = require("./routes/menus");
+const planesComidaRouter = require("./routes/planesComida");
 
 const app = express();
 app.use(cors()); // en producción: restringir a los orígenes reales del frontend
@@ -29,6 +31,8 @@ app.use("/api/excedentes", excedentesRouter);
 app.use("/api/entradas", entradasRouter);
 app.use("/api/donantes", donantesRouter);
 app.use("/api/reportes", reportesRouter);
+app.use("/api/menus", menusRouter);
+app.use("/api/planes-comida", planesComidaRouter);
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
