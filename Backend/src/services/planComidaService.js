@@ -57,4 +57,15 @@ async function listarPlanes({ fecha } = {}) {
   return planComidaRepository.listarPlanes({ fecha });
 }
 
-module.exports = { registrarPlan, listarPlanes };
+async function confirmarPlan({ planId, usuarioId }) {
+  if (!planId) {
+    throw new Error("planId es obligatorio");
+  }
+  if (!usuarioId) {
+    throw new Error("usuarioId es obligatorio");
+  }
+
+  return planComidaRepository.confirmarPlanConDescuento({ planId, usuarioId });
+}
+
+module.exports = { registrarPlan, listarPlanes, confirmarPlan };

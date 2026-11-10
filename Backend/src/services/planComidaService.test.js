@@ -118,3 +118,50 @@ describe("Servicio de Plan de Comidas (RF-17)", () => {
     });
   });
 });
+
+describe("confirmarPlan (RF-19)", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test("confirma delegando al repositorio", async () => {
+    planComidaRepository.confirmarPlanConDescuento.mockResolvedValue({
+      id: 1,
+      estado: "confirmado",
+      movimiento_salida_id: 42,
+    });
+
+    const resultado = await planComidaService.confirmarPlan({
+      planId: 1,
+      usuarioId: 3,
+    });
+
+    expect(resultado.estado).toBe("confirmado");
+    expect(planComidaRepository.confirmarPlanConDescuento).toHaveBeenCalledWith(
+      { planId: 1, usuarioId: 3 },
+    );
+  });
+
+  test("rechaza sin planId", async () => {
+    await expect(
+      planComidaService.confirmarPlan({ usuarioId: 3 }),
+    ).rejects.toThrow("planId es obligatorio");
+    expect(
+      planComidaRepository.confirmarPlanConDescuento,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("rechaza sin usuarioId", async () => {
+    await expect(
+      planComidaService.confirmarPlan({ planId: 1 }),
+    ).rejects.toThrow("usuarioId es obligatorio");
+  });
+
+  test("propaga el error cuando ya fue confirmado", async () => {
+    planComidaRepository.confirmarPlanConDescuento.mockRejectedValue(
+      new Error("El plan ya fue confirmado"),
+    );
+
+    await expect(
+      planComidaService.confirmarPlan({ planId: 1, usuarioId: 3 }),
+    ).rejects.toThrow("El plan ya fue confirmado");
+  });
+});

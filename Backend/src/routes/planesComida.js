@@ -30,4 +30,16 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.post("/:id/confirmar", async (req, res) => {
+  try {
+    const plan = await planComidaService.confirmarPlan({
+      planId: req.params.id,
+      usuarioId: req.body.usuarioId,
+    });
+    res.json(plan);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;
