@@ -17,6 +17,8 @@ import Mermas from "./pages/Mermas/Mermas";
 
 import Donaciones from "./pages/Donaciones/Donaciones";
 
+import Donantes from "./pages/Donantes";
+
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
 import "./App.css";
@@ -70,6 +72,7 @@ function App() {
       mermas: esAlmacen,
       planesComida: esAlmacen,
       donaciones: esRecepcion,
+      donantes: esRecepcion,
     };
 
     if (!permisos[pagina]) {
@@ -248,8 +251,10 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
-
-
+      case "donantes":
+        return esRecepcion
+          ? <Donantes navegar={navegar} />
+          : <Home navegar={navegar} />;
 
       default:
         return <Home navegar={navegar} />;

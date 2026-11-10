@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
+import { cargarDonantes } from "../../data/donantes";
 import "../InventarioComun.css";
 import "./Donaciones.css";
 
@@ -16,13 +17,14 @@ const fechaLocal = () => {
 const FORMULARIO_INICIAL = {
     articuloId: "",
     cantidad: "",
-    donante: "",
+    donanteId: "",
     fecha: fechaLocal(),
 };
 
 function Donaciones({ navegar, usuarioActual }) {
     const [articulos, setArticulos] = useState([]);
     const [donaciones, setDonaciones] = useState([]);
+    const [donantes, setDonantes] = useState(cargarDonantes);
     const [formulario, setFormulario] = useState({
         ...FORMULARIO_INICIAL,
     });
@@ -39,6 +41,7 @@ function Donaciones({ navegar, usuarioActual }) {
 
             setArticulos(lista);
             setDonaciones(historial);
+            setDonantes(cargarDonantes());
         } catch (error) {
             setMensaje({
                 tipo: "error",
@@ -73,13 +76,24 @@ function Donaciones({ navegar, usuarioActual }) {
         setMensaje(null);
 
         try {
+
+            const donanteSeleccionado = donantes.find(
+                (d) => d.id === formulario.donanteId
+            );
+
+            if (!donanteSeleccionado) {
+                throw new Error("Selecciona un donante registrado.");
+            }
+
             const resultado = await inventarioApi.registrarDonacion({
                 articuloId: formulario.articuloId,
                 cantidad: Number(formulario.cantidad),
-                donante: formulario.donante,
+                donanteId: donanteSeleccionado.id,
+                donante: donanteSeleccionado.nombre,
                 fecha: formulario.fecha,
                 usuarioId: usuarioActual?.id,
             });
+
 
             setFormulario({ ...FORMULARIO_INICIAL });
             await cargarDatos();
@@ -116,6 +130,17 @@ function Donaciones({ navegar, usuarioActual }) {
                 >
                     ← Volver al inicio
                 </button>
+
+
+                <div className="donaciones-gestion-donantes">
+                    <button
+                        type="button"
+                        onClick={() => navegar("donantes")}
+                    >
+                        ♡ Gestionar donantes
+                    </button>
+                </div>
+
 
                 <div className="donaciones-encabezado">
                     <span className="inv-etiqueta">
@@ -231,21 +256,40 @@ function Donaciones({ navegar, usuarioActual }) {
                                 />
                             </div>
 
+
                             <div className="inv-campo inv-ancho">
                                 <label htmlFor="donacion-donante">
-                                    Nombre del donante *
+                                    Donante o empresa benefactora *
                                 </label>
 
-                                <input
+                                <select
                                     id="donacion-donante"
-                                    type="text"
-                                    name="donante"
-                                    maxLength={120}
-                                    value={formulario.donante}
+                                    name="donanteId"
+                                    value={formulario.donanteId}
                                     onChange={cambiarCampo}
-                                    placeholder="Ej. Familia Pérez"
                                     required
-                                />
+                                >
+                                    <option value="">
+                                        Seleccionar donante registrado
+                                    </option>
+
+                                    {donantes.map((donante) => (
+                                        <option key={donante.id} value={donante.id}>
+                                            {donante.nombre}
+                                            {donante.tipo === "empresa"
+                                                ? " · Empresa"
+                                                : " · Persona"}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <button
+                                    type="button"
+                                    className="donaciones-registrar-donante"
+                                    onClick={() => navegar("donantes")}
+                                >
+                                    ＋ Registrar nuevo donante
+                                </button>
                             </div>
 
                             <div className="donaciones-aviso inv-ancho">

@@ -56,6 +56,7 @@ export const inventarioApi = {
 };
 */
 
+import { cargarDonantes } from "../data/donantes";
 
 const CLAVE_STOCK = "amandita_stock_demo_v1";
 const CLAVE_CATALOGO = "amandita_catalogo";
@@ -418,8 +419,18 @@ export const inventarioApi = {
         );
 
         const cantidad = Number(datos.cantidad);
-        const donante = datos.donante?.trim();
+
+        const donanteRegistrado = cargarDonantes().find(
+            (d) => d.id === datos.donanteId
+        );
+
+        if (!donanteRegistrado) {
+            throw new Error("El donante no está registrado.");
+        }
+
+        const donante = donanteRegistrado.nombre;
         const fecha = datos.fecha;
+
 
         if (!articulo) {
             throw new Error("Selecciona un artículo válido.");
@@ -445,6 +456,7 @@ export const inventarioApi = {
             articuloId: articulo.id,
             articulo: articulo.nombre,
             cantidad,
+            donanteId: donanteRegistrado.id,
             donante,
             fecha,
             fechaRegistro: new Date().toISOString(),

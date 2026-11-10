@@ -193,3 +193,32 @@
         align-items: flex-start;
     }
 }
+
+
+.donaciones-gestion-donantes {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.donaciones-gestion-donantes button,
+.donaciones-registrar-donante {
+    padding: 11px 16px;
+    border: 1px solid var(--salvia-claro);
+    border-radius: 30px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.donaciones-registrar-donante {
+    align-self: flex-start;
+    background: transparent;
+}
+
+.donaciones-gestion-donantes button:hover,
+.donaciones-registrar-donante:hover {
+    background: var(--salvia-claro);
+}
