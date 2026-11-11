@@ -301,6 +301,150 @@ function registrarMovimiento(tipo, datos) {
 export const inventarioApi = {
 
 
+    async guardarPlanificacion(registros) {
+        if (!Array.isArray(registros) || registros.length === 0) {
+            throw new Error("Selecciona al menos un menú para planificar.");
+        }
+
+        const menus = cargarMenus();
+        const inventario = obtenerInventario();
+        const planes = obtenerPlanes();
+
+        const fechasValidas = /^\d{4}-\d{2}-\d{2}$/;
+        const tiposValidos = ["Desayuno", "Almuerzo", "Merienda"];
+
+        const existentes = new Set(
+            planes.map((plan) => `${plan.fecha}|${plan.tipoComida}`)
+        );
+
+        const nuevos = [];
+
+        for (const registro of registros) {
+            const { fecha, tipoComida, menuId } = registro;
+            const comensales = Number(registro.comensales);
+
+            if (!fechasValidas.test(fecha)) {
+                throw new Error("Hay una fecha inválida.");
+            }
+
+            if (!tiposValidos.includes(tipoComida)) {
+                throw new Error("El tipo de comida no es válido.");
+            }
+
+            if (!Number.isInteger(comensales) || comensales <= 0) {
+                throw new Error(
+                    "El número de comensales debe ser un entero positivo."
+                );
+            }
+
+            const menu = menus.find(
+                (m) => String(m.id) === String(menuId)
+            );
+
+            if (!menu) {
+                throw new Error("Uno de los menús seleccionados no existe.");
+            }
+
+            if (menu.tipoComida !== tipoComida) {
+                throw new Error(
+                    `El menú "${menu.nombre}" no corresponde a ${tipoComida}.`
+                );
+            }
+
+            const clave = `${fecha}|${tipoComida}`;
+
+            if (existentes.has(clave)) {
+                throw new Error(
+                    `Ya existe un plan para ${tipoComida} del ${fecha}.`
+                );
+            }
+
+            existentes.add(clave);
+
+            const ingredientes = menu.ingredientes.map((ingrediente) => {
+                const articulo = inventario.find(
+                    (a) =>
+                        String(a.id) === String(ingrediente.articuloId)
+                );
+
+                if (!articulo) {
+                    throw new Error(
+                        `Un ingrediente de "${menu.nombre}" ya no existe.`
+                    );
+                }
+
+                const cantidad = Number(
+                    (
+                        Number(ingrediente.cantidadPorPorcion) *
+                        comensales
+                    ).toFixed(3)
+                );
+
+                if (!Number.isFinite(cantidad) || cantidad <= 0) {
+                    throw new Error(
+                        `Cantidad inválida en "${menu.nombre}".`
+                    );
+                }
+
+                return {
+                    articuloId: articulo.id,
+                    cantidad,
+                };
+            });
+
+            nuevos.push({
+                id: crypto.randomUUID(),
+                menuId: menu.id,
+                nombre: menu.nombre,
+                fecha,
+                tipoComida,
+                porciones: comensales,
+                estado: "borrador",
+                ingredientes,
+                fechaRegistro: new Date().toISOString(),
+            });
+        }
+
+        guardarJSON(CLAVE_PLANES, [...nuevos, ...planes]);
+
+        return nuevos;
+    },
+
+    async confirmarPlanComida(planId) {
+        const planes = obtenerPlanes();
+
+        const plan = planes.find(
+            (p) => String(p.id) === String(planId)
+        );
+
+        if (!plan) {
+            throw new Error("El plan no existe.");
+        }
+
+        if (plan.estado !== "borrador") {
+            throw new Error("Solo puedes confirmar planes en borrador.");
+        }
+
+        const actualizados = planes.map((p) =>
+            String(p.id) === String(planId)
+                ? {
+                    ...p,
+                    estado: "confirmado",
+                    fechaConfirmacion: new Date().toISOString(),
+                }
+                : p
+        );
+
+        guardarJSON(CLAVE_PLANES, actualizados);
+
+        return actualizados.find(
+            (p) => String(p.id) === String(planId)
+        );
+    },
+
+
+
+
     async crearPlanDesdeMenu(datos) {
         const menus = cargarMenus();
 

@@ -580,3 +580,19 @@
     font-weight: 700;
     font-size: 12px;
 }
+
+
+.planes-borrador-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    width: 100%;
+}
+
+.planes-borrador-acciones .planes-borrador {
+    margin: 0;
+}
+
+.planes-borrador-acciones .inv-boton {
+    width: 100%;
+}
