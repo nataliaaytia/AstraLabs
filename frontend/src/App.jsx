@@ -23,6 +23,8 @@ import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
 import Menus from "./pages/Menus/Menus";
 
+import Lotes from "./pages/Lotes/Lotes";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -73,6 +75,7 @@ function App() {
       salidas: esAlmacen,
       mermas: esAlmacen,
       planesComida: esAlmacen,
+      lotes: esAlmacen,
       menus: esAlmacen,
       donaciones: esRecepcion,
       donantes: esRecepcion,
@@ -221,6 +224,13 @@ function App() {
               usuarioActual={usuarioActual}
             />
           )
+          : <Home navegar={navegar} />;
+
+
+
+      case "lotes":
+        return esAlmacen
+          ? <Lotes navegar={navegar} />
           : <Home navegar={navegar} />;
 
 

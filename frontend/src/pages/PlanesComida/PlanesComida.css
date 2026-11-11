@@ -529,3 +529,54 @@
         align-items: flex-start;
     }
 }
+
+
+.planes-lotes-consumidos {
+    width: 100%;
+    margin-top: 15px;
+    padding: 17px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .72);
+}
+
+.planes-lotes-consumidos h4 {
+    margin: 0 0 12px;
+    color: var(--verde-oscuro);
+    font-size: 12px;
+}
+
+.planes-lote-consumido {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--crema);
+}
+
+.planes-lote-consumido:last-child {
+    border-bottom: none;
+}
+
+.planes-lote-consumido div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.planes-lote-consumido strong {
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.planes-lote-consumido small {
+    color: var(--texto-suave);
+    font-size: 10px;
+}
+
+.planes-lote-consumido>span {
+    flex-shrink: 0;
+    color: var(--verde-oscuro);
+    font-weight: 700;
+    font-size: 12px;
+}

@@ -38,6 +38,12 @@ function PanelOperativo({ navegar }) {
             pagina: "menus",
         },
 
+        {
+            titulo: "Control de lotes",
+            descripcion: "Organiza insumos por fecha de vencimiento.",
+            icono: "◷",
+            pagina: "lotes",
+        },
 
     ];
 

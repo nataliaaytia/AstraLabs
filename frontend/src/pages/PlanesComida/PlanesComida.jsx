@@ -469,6 +469,34 @@ function PlanesComida({ navegar, usuarioActual }) {
                                                         Los ingredientes ya
                                                         fueron descontados.
                                                     </span>
+
+                                                    {Array.isArray(plan.lotesConsumidos) &&
+                                                        plan.lotesConsumidos.length > 0 && (
+                                                            <div className="planes-lotes-consumidos">
+                                                                <h4>Lotes utilizados (FEFO)</h4>
+
+                                                                {plan.lotesConsumidos.map((lote, indice) => (
+                                                                    <div
+                                                                        key={`${lote.loteId}-${indice}`}
+                                                                        className="planes-lote-consumido"
+                                                                    >
+                                                                        <div>
+                                                                            <strong>{lote.articulo}</strong>
+                                                                            <small>
+                                                                                Lote: {lote.codigoLote}
+                                                                                {" · "}
+                                                                                Vence: {lote.fechaVencimiento || "Sin fecha"}
+                                                                            </small>
+                                                                        </div>
+
+                                                                        <span>
+                                                                            −{lote.cantidad} {lote.unidad}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
                                                 </div>
                                             ) : esConfirmado ? (
                                                 <>
