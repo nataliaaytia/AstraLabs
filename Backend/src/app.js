@@ -12,6 +12,7 @@ const donantesRouter = require("./routes/donantes");
 const reportesRouter = require("./routes/reportes");
 const menusRouter = require("./routes/menus");
 const planesComidaRouter = require("./routes/planesComida");
+const lotesRouter = require("./routes/lotes");
 
 const app = express();
 app.use(cors()); // en producción: restringir a los orígenes reales del frontend
@@ -33,6 +34,7 @@ app.use("/api/donantes", donantesRouter);
 app.use("/api/reportes", reportesRouter);
 app.use("/api/menus", menusRouter);
 app.use("/api/planes-comida", planesComidaRouter);
+app.use("/api/lotes", lotesRouter);
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
