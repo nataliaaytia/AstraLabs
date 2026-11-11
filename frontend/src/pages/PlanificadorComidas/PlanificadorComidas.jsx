@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cargarMenus } from "../../data/menus";
 import { inventarioApi } from "../../services/inventarioApi";
 import "../InventarioComun.css";
@@ -62,7 +62,10 @@ function crearDia(fecha) {
 }
 
 function PlanificadorComidas({ navegar }) {
-    const [menus] = useState(cargarMenus);
+    const [menus, setMenus] = useState([]);
+    useEffect(() => {
+        cargarMenus().then(setMenus).catch(error => setMensaje({ tipo: "error", texto: error.message }));
+    }, []);
     const [modalidad, setModalidad] = useState("semana");
     const [fecha, setFecha] = useState(fechaLocal);
     const [dias, setDias] = useState(() =>
@@ -136,7 +139,7 @@ function PlanificadorComidas({ navegar }) {
             setMensaje({
                 tipo: "exito",
                 texto:
-                    `Se guardaron ${registros.length} comidas en borrador. ` +
+                    `Se guardaron ${registros.length} comidas planificadas. ` +
                     "Puedes revisarlas y confirmarlas desde Planes de comida.",
             });
 
@@ -310,10 +313,7 @@ function PlanificadorComidas({ navegar }) {
 
                                     <div className="planificador-comidas">
                                         {TIPOS.map((tipo) => {
-                                            const disponibles = menus.filter(
-                                                (menu) =>
-                                                    menu.tipoComida === tipo
-                                            );
+                                            const disponibles = menus;
 
                                             const seleccionado = obtenerMenu(
                                                 dia.menus[tipo]

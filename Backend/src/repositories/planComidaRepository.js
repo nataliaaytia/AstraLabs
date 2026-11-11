@@ -25,11 +25,16 @@ async function listarPlanes({ fecha } = {}) {
   }
 
   const { rows } = await pool.query(
-    `SELECT p.id, p.fecha, p.tipo_comida, p.comensales, p.estado,
-            m.id AS menu_id, m.nombre AS menu
+    `SELECT p.id, p.fecha::text AS fecha, p.tipo_comida, p.comensales, p.estado,
+            m.id AS menu_id, m.nombre AS menu, m.descripcion,
+            COALESCE(json_agg(json_build_object('articuloId', mi.articulo_id,
+              'cantidadPorPorcion', mi.cantidad_por_porcion)
+              ORDER BY mi.id) FILTER (WHERE mi.id IS NOT NULL), '[]'::json) AS ingredientes
      FROM planes_comida p
      JOIN menus m ON m.id = p.menu_id
+     LEFT JOIN menu_ingredientes mi ON mi.menu_id = m.id
      ${where}
+     GROUP BY p.id, m.id
      ORDER BY p.fecha, p.tipo_comida`,
     params,
   );

@@ -1,6 +1,11 @@
 import { solicitar } from "./api";
+import { planificacionApi } from "./planificacionApi";
 
 export const inventarioApi = {
+    ...planificacionApi,
+
+    listarLotes() { return solicitar("/api/lotes"); },
+    asignarLote(datos) { return solicitar("/api/lotes/asignar", { method: "POST", body: JSON.stringify(datos) }); },
     listarCategorias() {
         return solicitar("/api/categorias");
     },

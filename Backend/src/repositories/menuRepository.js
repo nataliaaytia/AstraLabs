@@ -2,7 +2,12 @@ const pool = require("../db/pool");
 
 async function listarMenus() {
   const { rows } = await pool.query(
-    `SELECT id, nombre, descripcion FROM menus WHERE activo = TRUE ORDER BY nombre`,
+    `SELECT m.id, m.nombre, m.descripcion,
+            COALESCE(json_agg(json_build_object('articuloId', mi.articulo_id,
+              'cantidadPorPorcion', mi.cantidad_por_porcion)
+              ORDER BY mi.id) FILTER (WHERE mi.id IS NOT NULL), '[]'::json) AS ingredientes
+     FROM menus m LEFT JOIN menu_ingredientes mi ON mi.menu_id = m.id
+     WHERE m.activo = TRUE GROUP BY m.id ORDER BY m.nombre`,
   );
   return rows;
 }

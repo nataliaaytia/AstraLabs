@@ -8,18 +8,20 @@ import "../InventarioComun.css";
 import "./PlanesComida.css";
 
 const ESTADOS = {
-    borrador: "Borrador",
+    borrador: "Pendiente",
     confirmado: "Confirmado",
     preparado: "Preparado",
 };
 
 function PlanesComida({ navegar, usuarioActual }) {
 
-    const [menusDisponibles, setMenusDisponibles] = useState(cargarMenus);
+    const [menusDisponibles, setMenusDisponibles] = useState([]);
+    const [planes, setPlanes] = useState([]);
     const [nuevoPlan, setNuevoPlan] = useState({
         menuId: "",
         porciones: "10",
         fecha: new Date().toLocaleDateString("en-CA"),
+        tipoComida: "Almuerzo",
     });
     const [creandoPlan, setCreandoPlan] = useState(false);
 
@@ -45,14 +47,16 @@ function PlanesComida({ navegar, usuarioActual }) {
 
         const iniciar = async () => {
             try {
-                const [listaPlanes, listaArticulos] = await Promise.all([
+                const [listaPlanes, listaArticulos, listaMenus] = await Promise.all([
                     inventarioApi.listarPlanesComida(),
                     inventarioApi.listarArticulos(),
+                    cargarMenus(),
                 ]);
 
                 if (activo) {
                     setPlanes(listaPlanes);
                     setArticulos(listaArticulos);
+                    setMenusDisponibles(listaMenus);
                 }
             } catch (error) {
                 if (activo) {
@@ -86,19 +90,19 @@ function PlanesComida({ navegar, usuarioActual }) {
             const creado = await inventarioApi.crearPlanDesdeMenu(nuevoPlan);
 
             await cargarDatos();
-            setMenusDisponibles(cargarMenus());
+            setMenusDisponibles(await cargarMenus());
 
             setNuevoPlan({
                 menuId: "",
                 porciones: "10",
                 fecha: new Date().toLocaleDateString("en-CA"),
+                tipoComida: "Almuerzo",
             });
 
             setMensaje({
                 tipo: "exito",
                 texto:
-                    `El plan "${creado.nombre}" se creó para ` +
-                    `${creado.porciones} porciones.`,
+                    `El plan se creó para ${creado.comensales} porciones.`,
             });
         } catch (error) {
             setMensaje({
@@ -114,92 +118,53 @@ function PlanesComida({ navegar, usuarioActual }) {
     const obtenerArticulo = (id) =>
         articulos.find((a) => String(a.id) === String(id));
 
-    const verificarIngredientes = (plan) => {
+    const obtenerFaltantes = (plan) => {
         const totales = new Map();
-
-        plan.ingredientes.forEach((ingrediente) => {
+        (plan.ingredientes || []).forEach((ingrediente) => {
             const id = String(ingrediente.articuloId);
-
-            totales.set(
-                id,
-                (totales.get(id) || 0) + Number(ingrediente.cantidad)
-            );
+            totales.set(id, (totales.get(id) || 0) + Number(ingrediente.cantidad));
         });
 
-        return [...totales.entries()].every(([id, cantidad]) => {
+        return [...totales.entries()].flatMap(([id, cantidad]) => {
             const articulo = obtenerArticulo(id);
-
-            return articulo &&
-                cantidad <= Number(articulo.stock_actual);
+            const disponible = Number(articulo?.stock_actual ?? 0);
+            if (articulo && Number.isFinite(cantidad) && cantidad > 0 && disponible >= cantidad) {
+                return [];
+            }
+            return [{
+                id,
+                nombre: articulo?.nombre || `Artículo #${id} (no encontrado)`,
+                necesario: cantidad,
+                disponible,
+                unidad: articulo?.unidad_medida || "",
+            }];
         });
     };
 
 
-    const confirmarPlan = async (planId) => {
-        setMensaje(null);
-
-        try {
-            await inventarioApi.confirmarPlanComida(planId);
-
-            await cargarDatos();
-
-            setMensaje({
-                tipo: "exito",
-                texto:
-                    "Plan confirmado correctamente. " +
-                    "Ahora está disponible para registrar su preparación.",
-            });
-        } catch (error) {
-            setMensaje({
-                tipo: "error",
-                texto: error.message,
-            });
-        }
-    };
-
+    // En este backend, confirmar el plan ya descuenta los ingredientes por FEFO.
     const prepararPlan = async () => {
         if (!planAConfirmar || procesando !== null) return;
-
-        const plan = planAConfirmar;
-
-        setProcesando(plan.id);
+        setProcesando(planAConfirmar.id);
         setMensaje(null);
-
         try {
-            const resultado = await inventarioApi.prepararPlanComida(
-                plan.id,
-                usuarioActual?.id
-            );
-
+            await inventarioApi.confirmarPlanComida(planAConfirmar.id);
             await cargarDatos();
-
             setPlanAConfirmar(null);
-
-            setMensaje({
-                tipo: "exito",
-                texto:
-                    `"${resultado.plan}" se marcó como preparado. ` +
-                    "Los ingredientes fueron descontados correctamente.",
-            });
+            setMensaje({ tipo: "exito", texto: "Plan confirmado. Los ingredientes fueron descontados del inventario por FEFO." });
         } catch (error) {
-            setPlanAConfirmar(null);
-
-            setMensaje({
-                tipo: "error",
-                texto: error.message,
-            });
+            setMensaje({ tipo: "error", texto: error.message });
         } finally {
             setProcesando(null);
         }
     };
-
 
     const filtrados = planes.filter(
         (plan) => filtro === "todos" || plan.estado === filtro
     );
 
     const confirmados = planes.filter(
-        (plan) => plan.estado === "confirmado"
+        (plan) => plan.estado === "borrador"
     ).length;
 
     const preparados = planes.filter(
@@ -293,12 +258,19 @@ function PlanesComida({ navegar, usuarioActual }) {
 
                                 {menusDisponibles.map((menu) => (
                                     <option key={menu.id} value={menu.id}>
-                                        {menu.nombre} · {menu.tipoComida}
+                                        {menu.nombre}
                                     </option>
                                 ))}
                             </select>
                         </div>
 
+                        <div className="inv-campo">
+                            <label htmlFor="plan-tipo">Tipo de comida *</label>
+                            <select id="plan-tipo" value={nuevoPlan.tipoComida}
+                                onChange={(e) => setNuevoPlan(a => ({ ...a, tipoComida: e.target.value }))}>
+                                <option>Desayuno</option><option>Almuerzo</option><option>Merienda</option>
+                            </select>
+                        </div>
                         <div className="inv-campo">
                             <label htmlFor="plan-porciones">
                                 Número de porciones *
@@ -350,7 +322,7 @@ function PlanesComida({ navegar, usuarioActual }) {
                             >
                                 {creandoPlan
                                     ? "Creando..."
-                                    : "Crear plan confirmado →"}
+                                    : "Crear plan →"}
                             </button>
                         </div>
                     </form>
@@ -365,9 +337,9 @@ function PlanesComida({ navegar, usuarioActual }) {
                     </div>
 
                     <div className="planes-resumen-card">
-                        <span>Pendientes de preparar</span>
+                        <span>Pendientes de confirmar</span>
                         <strong>{confirmados}</strong>
-                        <small>Planes confirmados</small>
+                        <small>Pendientes de confirmación</small>
                     </div>
 
                     <div className="planes-resumen-card">
@@ -393,7 +365,7 @@ function PlanesComida({ navegar, usuarioActual }) {
                         <div>
                             <h2>Planes de comida</h2>
                             <p>
-                                Selecciona un plan para confirmar su preparación.
+                                Confirma un plan para descontar sus ingredientes del inventario.
                             </p>
                         </div>
 
@@ -403,9 +375,9 @@ function PlanesComida({ navegar, usuarioActual }) {
                             onChange={(e) => setFiltro(e.target.value)}
                         >
                             <option value="todos">Todos los planes</option>
-                            <option value="confirmado">Confirmados</option>
+
                             <option value="preparado">Preparados</option>
-                            <option value="borrador">Borradores</option>
+                            <option value="borrador">Pendientes</option>
                         </select>
                     </div>
 
@@ -421,8 +393,8 @@ function PlanesComida({ navegar, usuarioActual }) {
                         <div className="planes-lista">
                             {filtrados.map((plan) => {
                                 const ingredientes = listaIngredientes(plan);
-                                const hayStock = verificarIngredientes(plan);
-                                const esConfirmado = plan.estado === "confirmado";
+                                const faltantes = obtenerFaltantes(plan);
+                                const hayStock = plan.ingredientes?.length > 0 && faltantes.length === 0;
                                 const esPreparado = plan.estado === "preparado";
 
                                 return (
@@ -471,7 +443,7 @@ function PlanesComida({ navegar, usuarioActual }) {
                                                         {ingrediente.unidad}
                                                     </strong>
 
-                                                    {esConfirmado && (
+                                                    {false && (
                                                         <small>
                                                             Stock:{" "}
                                                             {ingrediente.disponible}
@@ -520,45 +492,36 @@ function PlanesComida({ navegar, usuarioActual }) {
                                                         )}
 
                                                 </div>
-                                            ) : esConfirmado ? (
-                                                <>
-                                                    {!hayStock && (
-                                                        <p className="planes-advertencia">
-                                                            Stock insuficiente
-                                                            o ingrediente no disponible.
-                                                        </p>
-                                                    )}
-
-                                                    <button
-                                                        type="button"
-                                                        className="inv-boton"
-                                                        disabled={
-                                                            !hayStock ||
-                                                            procesando !== null
-                                                        }
-                                                        onClick={() =>
-                                                            setPlanAConfirmar(plan)
-                                                        }
-                                                    >
-                                                        {procesando === plan.id
-                                                            ? "Registrando..."
-                                                            : "Marcar como preparado →"}
-                                                    </button>
-                                                </>
                                             ) : (
 
                                                 <div className="planes-borrador-acciones">
                                                     <p className="planes-borrador">
-                                                        Este plan está en borrador.
-                                                        Confírmalo para habilitar su preparación.
+                                                        El plan está pendiente. Al confirmarlo se descontarán sus ingredientes del inventario.
                                                     </p>
 
+                                                    {!hayStock && (
+                                                        <div role="status" style={{ marginBottom: "12px", padding: "12px", borderRadius: "10px", background: "#fff3e9", color: "#6b3c20", fontSize: "12px" }}>
+                                                            <strong>No se puede confirmar: stock insuficiente o ingredientes sin registrar.</strong>
+                                                            {faltantes.length > 0 ? (
+                                                                <ul style={{ margin: "8px 0 0", paddingLeft: "18px" }}>
+                                                                    {faltantes.map((item) => (
+                                                                        <li key={item.id}>
+                                                                            {item.nombre}: necesita {item.necesario} {item.unidad}, disponible {item.disponible} {item.unidad}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            ) : (
+                                                                <p>Este plan no tiene ingredientes asociados.</p>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="inv-boton"
-                                                        onClick={() => confirmarPlan(plan.id)}
+                                                        disabled={!hayStock || procesando !== null}
+                                                        onClick={() => setPlanAConfirmar(plan)}
                                                     >
-                                                        Confirmar plan →
+                                                        Confirmar y descontar stock →
                                                     </button>
                                                 </div>
 

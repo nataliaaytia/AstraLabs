@@ -13,6 +13,10 @@ import { ROLES } from "./data/usuariosDemo";
 import Stock from "./pages/Stock/Stock";
 import Salidas from "./pages/Salidas/Salidas";
 import Mermas from "./pages/Mermas/Mermas";
+import Menus from "./pages/Menus/Menus";
+import Lotes from "./pages/Lotes/Lotes";
+import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
+import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
 import { authApi } from "./services/authApi";
 import {
@@ -73,6 +77,10 @@ function App() {
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
+      menus: esAlmacen,
+      lotes: esAlmacen,
+      planificadorComidas: esAlmacen,
+      planesComida: esAlmacen,
     };
 
     if (!permisos[pagina]) {
@@ -228,6 +236,14 @@ function App() {
 
 
 
+      case "menus":
+        return esAlmacen ? <Menus navegar={navegar} /> : <Home navegar={navegar} />;
+      case "lotes":
+        return esAlmacen ? <Lotes navegar={navegar} /> : <Home navegar={navegar} />;
+      case "planificadorComidas":
+        return esAlmacen ? <PlanificadorComidas navegar={navegar} /> : <Home navegar={navegar} />;
+      case "planesComida":
+        return esAlmacen ? <PlanesComida navegar={navegar} usuarioActual={usuarioActual} /> : <Home navegar={navegar} />;
       default:
         return <Home navegar={navegar} />;
     }
