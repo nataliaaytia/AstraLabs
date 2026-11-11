@@ -22,6 +22,7 @@ function PlanesComida({ navegar, usuarioActual }) {
         fecha: new Date().toLocaleDateString("en-CA"),
     });
     const [creandoPlan, setCreandoPlan] = useState(false);
+    const [planes, setPlanes] = useState([]);
 
     const [articulos, setArticulos] = useState([]);
     const [filtro, setFiltro] = useState("todos");
