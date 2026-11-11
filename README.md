@@ -220,14 +220,17 @@ tanto en el servicio como con un `CHECK` constraint en la base de datos).
 Correr `npm run seed` dentro de `Backend/` para crearlos (o actualizarlos) en
 la base de datos.
 
-## Pendiente de conectar en el frontend
+## Endpoints agregados para conectar el frontend
 
-- Reemplazar `usuariosDemo.js` / `localStorage` en `iniciarSesion()` por un
-  `fetch`/`axios` a `POST /api/auth/login`, guardando el `token` recibido
-  (en vez de solo el objeto `usuario`).
-- Mandar `Authorization: Bearer <token>` en cada petición a `/api/usuarios/*`.
-- Reemplazar `ROLES.ADMIN/PERSONAL/VISITANTE` por los 3 roles reales
-  (`Administradora`, `Recepcion`, `Almacen_Cocina`) en todas las
-  comparaciones de rol (`esAdmin`, navegación condicional, etc.).
-- Configurar una URL base de la API (ej. `VITE_API_URL`) en vez de
-  hardcodear `localhost:3000`.
+- `POST /api/articulos` — crea un artículo. Body: `{ "nombre", "categoriaId", "unidadMedida", "esPerecedero"?, "stockMinimo"? }`.
+- `GET /api/excedentes` — historial de excedentes (RF-09).
+- `POST /api/excedentes` — ahora acepta también `observaciones`.
+
+## Cómo correr el proyecto
+
+1. Crear la base de datos PostgreSQL `astralabs` y ejecutar `schema.sql`.
+2. `cd Backend`, copiar `.env.example` a `.env` y completar `JWT_SECRET` y los datos de la base.
+3. `npm install`, `npm run seed` (usuarios y artículos de prueba) y `npm run dev` (puerto 3000).
+4. En otra terminal: `cd frontend`, `npm install` y `npm run dev` (puerto 5173).
+
+El frontend usa `VITE_API_URL` (por defecto `http://localhost:3000`); ver `frontend/.env.example`.

@@ -7,15 +7,18 @@ function Login({ navegar, iniciarSesion }) {
     const [contrasena, setContrasena] = useState("");
     const [mostrarContrasena, setMostrarContrasena] = useState(false);
     const [error, setError] = useState("");
+    const [enviando, setEnviando] = useState(false);
 
-    const manejarIngreso = (e) => {
+    const manejarIngreso = async (e) => {
         e.preventDefault();
         setError("");
+        setEnviando(true);
 
-        const resultado = iniciarSesion(correo, contrasena);
+        const resultado = await iniciarSesion(correo, contrasena);
 
         if (!resultado.exito) {
             setError(resultado.mensaje);
+            setEnviando(false);
         }
     };
 
@@ -100,8 +103,12 @@ function Login({ navegar, iniciarSesion }) {
                             </div>
                         )}
 
-                        <button type="submit" className="login-boton">
-                            Iniciar sesión
+                        <button
+                            type="submit"
+                            className="login-boton"
+                            disabled={enviando}
+                        >
+                            {enviando ? "Ingresando..." : "Iniciar sesión"}
                             <span aria-hidden="true">→</span>
                         </button>
 

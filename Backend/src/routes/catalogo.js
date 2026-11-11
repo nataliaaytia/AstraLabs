@@ -23,4 +23,21 @@ router.get("/articulos", async (req, res) => {
   }
 });
 
+router.post("/articulos", async (req, res) => {
+  const { nombre, categoriaId, unidadMedida, esPerecedero, stockMinimo } =
+    req.body;
+  try {
+    const articulo = await catalogoService.registrarArticulo({
+      nombre,
+      categoriaId,
+      unidadMedida,
+      esPerecedero,
+      stockMinimo,
+    });
+    res.status(201).json(articulo);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;

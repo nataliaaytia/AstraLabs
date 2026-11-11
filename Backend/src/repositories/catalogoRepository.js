@@ -22,17 +22,33 @@ async function listarArticulos({ categoriaId } = {}) {
 
   const { rows } = await pool.query(
     `SELECT a.id, a.nombre, a.categoria_id, c.nombre AS categoria,
-            a.unidad_medida, a.es_perecedero, a.stock_minimo,
+            a.unidad_medida, a.es_perecedero, a.stock_minimo, a.created_at,
             COALESCE(SUM(l.cantidad_disponible), 0) AS stock_actual
      FROM articulos a
      JOIN categorias c ON c.id = a.categoria_id
      LEFT JOIN lotes l ON l.articulo_id = a.id
      ${where}
-     GROUP BY a.id, a.nombre, a.categoria_id, c.nombre, a.unidad_medida, a.es_perecedero, a.stock_minimo
+     GROUP BY a.id, a.nombre, a.categoria_id, c.nombre, a.unidad_medida, a.es_perecedero, a.stock_minimo, a.created_at
      ORDER BY c.nombre, a.nombre`,
     params,
   );
   return rows;
 }
 
-module.exports = { listarCategorias, listarArticulos };
+async function crearArticulo({
+  nombre,
+  categoriaId,
+  unidadMedida,
+  esPerecedero,
+  stockMinimo,
+}) {
+  const { rows } = await pool.query(
+    `INSERT INTO articulos (nombre, categoria_id, unidad_medida, es_perecedero, stock_minimo)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, nombre, categoria_id, unidad_medida, es_perecedero, stock_minimo, created_at`,
+    [nombre, categoriaId, unidadMedida, esPerecedero, stockMinimo],
+  );
+  return rows[0];
+}
+
+module.exports = { listarCategorias, listarArticulos, crearArticulo };

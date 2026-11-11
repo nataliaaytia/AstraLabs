@@ -1,9 +1,6 @@
 
 import { useEffect, useState } from "react";
-import {
-    CATEGORIAS,
-    UNIDADES_MEDIDA,
-} from "../../data/catalogo";
+import { UNIDADES_MEDIDA } from "../../data/catalogo";
 import "./ModalArticulo.css";
 
 const FORMULARIO_INICIAL = {
@@ -12,9 +9,10 @@ const FORMULARIO_INICIAL = {
     unidadMedida: "",
 };
 
-function ModalArticulo({ abierto, onCerrar, onGuardar }) {
+function ModalArticulo({ abierto, onCerrar, onGuardar, categorias = [] }) {
     const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
     const [error, setError] = useState("");
+    const [guardando, setGuardando] = useState(false);
 
     useEffect(() => {
         if (abierto) {
@@ -47,14 +45,19 @@ function ModalArticulo({ abierto, onCerrar, onGuardar }) {
         setError("");
     };
 
-    const enviarFormulario = (evento) => {
+    const enviarFormulario = async (evento) => {
         evento.preventDefault();
 
-        const resultado = onGuardar({
+        if (guardando) return;
+        setGuardando(true);
+
+        const resultado = await onGuardar({
             nombre: formulario.nombre.trim().replace(/\s+/g, " "),
             categoria: formulario.categoria,
             unidadMedida: formulario.unidadMedida,
         });
+
+        setGuardando(false);
 
         if (!resultado.exito) {
             setError(resultado.mensaje);
@@ -133,7 +136,7 @@ function ModalArticulo({ abierto, onCerrar, onGuardar }) {
                                 required
                             >
                                 <option value="">Seleccionar categoría</option>
-                                {CATEGORIAS.map((categoria) => (
+                                {categorias.map((categoria) => (
                                     <option key={categoria} value={categoria}>
                                         {categoria}
                                     </option>
