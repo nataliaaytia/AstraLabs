@@ -17,9 +17,13 @@ import Mermas from "./pages/Mermas/Mermas";
 
 import Donaciones from "./pages/Donaciones/Donaciones";
 
-import Donantes from "./pages/Donantes";
+import Donantes from "./pages/Donantes/Donantes";
 
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
+
+import Menus from "./pages/Menus/Menus";
+
+import Lotes from "./pages/Lotes/Lotes";
 
 import "./App.css";
 
@@ -71,6 +75,8 @@ function App() {
       salidas: esAlmacen,
       mermas: esAlmacen,
       planesComida: esAlmacen,
+      lotes: esAlmacen,
+      menus: esAlmacen,
       donaciones: esRecepcion,
       donantes: esRecepcion,
     };
@@ -221,6 +227,13 @@ function App() {
           : <Home navegar={navegar} />;
 
 
+
+      case "lotes":
+        return esAlmacen
+          ? <Lotes navegar={navegar} />
+          : <Home navegar={navegar} />;
+
+
       case "planesComida":
         return esAlmacen
           ? (
@@ -230,6 +243,13 @@ function App() {
             />
           )
           : <Home navegar={navegar} />;
+
+
+      case "menus":
+        return esAlmacen
+          ? <Menus navegar={navegar} />
+          : <Home navegar={navegar} />;
+
 
       case "mermas":
         return esAlmacen

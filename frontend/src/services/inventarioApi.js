@@ -57,6 +57,11 @@ export const inventarioApi = {
 */
 
 import { cargarDonantes } from "../data/donantes";
+import { cargarMenus } from "../data/menus";
+import {
+    simularFEFO,
+    guardarLotes,
+} from "../data/lotes";
 
 const CLAVE_STOCK = "amandita_stock_demo_v1";
 const CLAVE_CATALOGO = "amandita_catalogo";
@@ -187,8 +192,10 @@ function obtenerPlanes() {
 }
 
 
+
 function registrarMovimiento(tipo, datos) {
     const inventario = obtenerInventario();
+
     const articulo = inventario.find(
         (a) => String(a.id) === String(datos.articuloId)
     );
@@ -215,20 +222,28 @@ function registrarMovimiento(tipo, datos) {
         tipo === "merma" &&
         !["vencimiento", "deterioro", "perdida"].includes(datos.motivo)
     ) {
-        throw new Error("Debes seleccionar un motivo válido.");
+        throw new Error("Selecciona un motivo válido.");
     }
 
     if (cantidad > Number(articulo.stock_actual)) {
-        throw new Error(
-            `Stock insuficiente. Disponible: ${articulo.stock_actual}.`
-        );
+        throw new Error("Stock insuficiente.");
     }
 
-    articulo.stock_actual = Number(
-        (Number(articulo.stock_actual) - cantidad).toFixed(3)
+    const fefo = simularFEFO(
+        [{ articuloId: articulo.id, cantidad }],
+        inventario
     );
 
-    const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
+    const nuevoInventario = inventario.map((a) =>
+        String(a.id) === String(articulo.id)
+            ? {
+                ...a,
+                stock_actual: Number(
+                    (Number(a.stock_actual) - cantidad).toFixed(3)
+                ),
+            }
+            : a
+    );
 
     const movimiento = {
         id: crypto.randomUUID(),
@@ -239,23 +254,125 @@ function registrarMovimiento(tipo, datos) {
         usuarioId: datos.usuarioId,
         destino: tipo === "salida" ? datos.destino.trim() : null,
         motivo: tipo === "merma" ? datos.motivo : null,
+        lotesConsumidos: fefo.asignaciones,
         fecha: new Date().toISOString(),
     };
 
-    movimientos.unshift(movimiento);
+    const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
 
-    guardarJSON(CLAVE_STOCK, inventario);
-    guardarJSON(CLAVE_MOVIMIENTOS, movimientos);
+    const respaldo = {
+        stock: localStorage.getItem(CLAVE_STOCK),
+        lotes: localStorage.getItem("amandita_lotes_v1"),
+        movimientos: localStorage.getItem(CLAVE_MOVIMIENTOS),
+    };
+
+    try {
+        guardarJSON(CLAVE_STOCK, nuevoInventario);
+        guardarLotes(fefo.lotes);
+
+        guardarJSON(
+            CLAVE_MOVIMIENTOS,
+            [movimiento, ...movimientos]
+        );
+    } catch {
+        for (const [clave, valor] of [
+            [CLAVE_STOCK, respaldo.stock],
+            ["amandita_lotes_v1", respaldo.lotes],
+            [CLAVE_MOVIMIENTOS, respaldo.movimientos],
+        ]) {
+            if (valor === null) localStorage.removeItem(clave);
+            else localStorage.setItem(clave, valor);
+        }
+
+        throw new Error("No se pudo registrar el movimiento.");
+    }
 
     return {
         movimientoId: movimiento.id,
         articuloId: articulo.id,
         cantidadTotal: cantidad,
-        stockActual: articulo.stock_actual,
+        stockActual: nuevoInventario.find(
+            (a) => String(a.id) === String(articulo.id)
+        ).stock_actual,
+        lotesConsumidos: fefo.asignaciones,
     };
 }
 
 export const inventarioApi = {
+
+
+    async crearPlanDesdeMenu(datos) {
+        const menus = cargarMenus();
+
+        const menu = menus.find(
+            (m) => String(m.id) === String(datos.menuId)
+        );
+
+        if (!menu) {
+            throw new Error("Selecciona un menú registrado.");
+        }
+
+        const porciones = Number(datos.porciones);
+
+        if (!Number.isInteger(porciones) || porciones <= 0) {
+            throw new Error(
+                "La cantidad de porciones debe ser un entero positivo."
+            );
+        }
+
+        if (!datos.fecha ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(datos.fecha)) {
+            throw new Error("Selecciona una fecha válida.");
+        }
+
+        const inventario = obtenerInventario();
+
+        const ingredientes = menu.ingredientes.map((ingrediente) => {
+            const articulo = inventario.find(
+                (a) => String(a.id) === String(ingrediente.articuloId)
+            );
+
+            if (!articulo) {
+                throw new Error(
+                    "Uno de los ingredientes ya no está disponible."
+                );
+            }
+
+            const cantidadTotal = Number(
+                (Number(ingrediente.cantidadPorPorcion) * porciones)
+                    .toFixed(3)
+            );
+
+            if (cantidadTotal <= 0) {
+                throw new Error(
+                    "La cantidad total de un ingrediente es inválida."
+                );
+            }
+
+            return {
+                articuloId: articulo.id,
+                cantidad: cantidadTotal,
+            };
+        });
+
+        const planes = obtenerPlanes();
+
+        const nuevoPlan = {
+            id: crypto.randomUUID(),
+            menuId: menu.id,
+            nombre: menu.nombre,
+            fecha: datos.fecha,
+            tipoComida: menu.tipoComida,
+            porciones,
+            estado: "confirmado",
+            ingredientes,
+            fechaRegistro: new Date().toISOString(),
+        };
+
+        guardarJSON(CLAVE_PLANES, [nuevoPlan, ...planes]);
+
+        return nuevoPlan;
+    },
 
 
     async listarPlanesComida() {
@@ -341,7 +458,18 @@ export const inventarioApi = {
             });
         }
 
+
+        const fefo = simularFEFO(
+            descuentos.map((descuento) => ({
+                articuloId: descuento.articuloId,
+                cantidad: descuento.cantidad,
+            })),
+            inventario
+        );
+
+
         const fechaPreparacion = new Date().toISOString();
+
 
         const nuevosPlanes = planes.map((p) =>
             p.id === plan.id
@@ -350,9 +478,11 @@ export const inventarioApi = {
                     estado: "preparado",
                     fechaPreparacion,
                     preparadoPor: usuarioId,
+                    lotesConsumidos: fefo.asignaciones,
                 }
                 : p
         );
+
 
         const nuevoInventario = inventario.map((articulo) => {
             const descuento = descuentos.find(
@@ -371,20 +501,24 @@ export const inventarioApi = {
             plan: plan.nombre,
             usuarioId,
             ingredientes: descuentos,
+            lotesConsumidos: fefo.asignaciones,
             fecha: fechaPreparacion,
         };
 
         const movimientos = leerJSON(CLAVE_MOVIMIENTOS, []);
 
-        // Un único registro local reúne estado, stock y movimiento.
+
         const respaldo = {
             planes: localStorage.getItem(CLAVE_PLANES),
             stock: localStorage.getItem(CLAVE_STOCK),
+            lotes: localStorage.getItem("amandita_lotes_v1"),
             movimientos: localStorage.getItem(CLAVE_MOVIMIENTOS),
         };
 
+
         try {
             guardarJSON(CLAVE_STOCK, nuevoInventario);
+            guardarLotes(fefo.lotes);
             guardarJSON(CLAVE_PLANES, nuevosPlanes);
             guardarJSON(
                 CLAVE_MOVIMIENTOS,
@@ -397,15 +531,18 @@ export const inventarioApi = {
             };
 
             restaurar(CLAVE_STOCK, respaldo.stock);
+            restaurar("amandita_lotes_v1", respaldo.lotes);
             restaurar(CLAVE_PLANES, respaldo.planes);
             restaurar(CLAVE_MOVIMIENTOS, respaldo.movimientos);
             throw new Error("No se pudo guardar la preparación.");
         }
 
+
         return {
             exito: true,
             plan: plan.nombre,
             descuentos,
+            lotesConsumidos: fefo.asignaciones,
             fechaPreparacion,
         };
     },

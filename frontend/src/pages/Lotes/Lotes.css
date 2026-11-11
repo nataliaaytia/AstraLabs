@@ -1,0 +1,177 @@
+.lotes-resumen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.lotes-resumen>div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 25px;
+    border: 1px solid var(--crema);
+    border-radius: 20px;
+    background: white;
+}
+
+.lotes-resumen span,
+.lotes-resumen small {
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.lotes-resumen strong {
+    color: var(--verde-oscuro);
+    font-family: "DM Serif Display", serif;
+    font-size: 39px;
+    font-weight: 400;
+}
+
+.lotes-distribucion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
+    align-items: start;
+    gap: 23px;
+}
+
+.lotes-ayuda {
+    margin: -8px 0 25px;
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.lotes-stock {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 17px;
+    border-radius: 13px;
+    background: #E8F2E5;
+    color: #50704B;
+    font-size: 12px;
+}
+
+.lotes-directorio {
+    overflow: hidden;
+    border: 1px solid var(--crema);
+    border-radius: 22px;
+    background: white;
+}
+
+.lotes-directorio-encabezado {
+    padding: 26px;
+    background: #E8EADD;
+}
+
+.lotes-directorio-encabezado>span {
+    color: var(--verde-oscuro);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.lotes-directorio-encabezado h2 {
+    margin: 12px 0 20px;
+    color: var(--texto);
+    font-family: "DM Serif Display", serif;
+    font-size: 27px;
+    font-weight: 400;
+}
+
+.lotes-directorio-encabezado select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid var(--crema);
+    border-radius: 11px;
+    background: white;
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.lotes-registro {
+    padding: 22px;
+    border-bottom: 1px solid var(--crema);
+}
+
+.lotes-registro:last-child {
+    border-bottom: none;
+}
+
+.lotes-registro-superior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lotes-registro-superior strong {
+    color: var(--texto);
+    font-size: 13px;
+}
+
+.lotes-registro p {
+    margin: 12px 0;
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.lotes-registro-datos {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--crema);
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.lotes-registro-datos strong {
+    color: var(--verde-oscuro);
+}
+
+.lotes-etiqueta {
+    padding: 7px 10px;
+    border-radius: 25px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.lotes-etiqueta.proximo {
+    background: #FFF0EC;
+    color: #A34D41;
+}
+
+.lotes-etiqueta.vigente {
+    background: #E8F2E5;
+    color: #50704B;
+}
+
+.lotes-etiqueta.vencido {
+    background: #F3D9D6;
+    color: #A34D41;
+}
+
+.lotes-etiqueta.sin-fecha {
+    background: #F0EFED;
+    color: #77736E;
+}
+
+@media (max-width: 850px) {
+    .lotes-distribucion {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .lotes-resumen {
+        grid-template-columns: 1fr;
+    }
+
+    .lotes-registro-superior,
+    .lotes-registro-datos {
+        flex-wrap: wrap;
+    }
+}

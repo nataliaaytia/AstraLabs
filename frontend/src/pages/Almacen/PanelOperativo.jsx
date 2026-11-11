@@ -30,6 +30,21 @@ function PanelOperativo({ navegar }) {
             pagina: "planesComida",
         },
 
+
+        {
+            titulo: "Recetario de menús",
+            descripcion: "Registra recetas e ingredientes por porción.",
+            icono: "♧",
+            pagina: "menus",
+        },
+
+        {
+            titulo: "Control de lotes",
+            descripcion: "Organiza insumos por fecha de vencimiento.",
+            icono: "◷",
+            pagina: "lotes",
+        },
+
     ];
 
     return (
