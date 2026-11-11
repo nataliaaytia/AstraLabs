@@ -1,0 +1,293 @@
+.planificador-pagina {
+    background:
+        radial-gradient(ellipse at 100% 0%,
+            rgba(241, 205, 183, .32),
+            transparent 45%),
+        var(--crema-claro);
+}
+
+.planificador-herramientas {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 25px;
+    margin-bottom: 28px;
+    border: 1px solid var(--crema);
+    border-radius: 20px;
+    background: white;
+}
+
+.planificador-modalidades {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 13px;
+    background: var(--crema-claro);
+}
+
+.planificador-modalidades button {
+    padding: 13px 19px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--texto-suave);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.planificador-modalidades button.activo {
+    background: var(--salvia);
+    color: white;
+}
+
+.planificador-herramientas .inv-campo {
+    min-width: 195px;
+}
+
+.planificador-aviso {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+    background: #F7E7DD;
+}
+
+.planificador-aviso span {
+    font-size: 29px;
+    color: var(--verde-oscuro);
+}
+
+.planificador-aviso p {
+    flex: 1;
+    color: var(--texto);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.planificador-aviso button {
+    padding: 12px 17px;
+    border: none;
+    border-radius: 30px;
+    background: var(--verde-oscuro);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.planificador-dias {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.planificador-dia {
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid var(--crema);
+    border-radius: 23px;
+    background: white;
+    box-shadow: 0 12px 35px rgba(81, 72, 62, .035);
+}
+
+.planificador-dia-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 23px;
+}
+
+.planificador-dia-cabecera h2 {
+    margin-top: 11px;
+    font-family: "DM Serif Display", serif;
+    font-weight: 400;
+    font-size: 29px;
+    color: var(--texto);
+}
+
+.planificador-contador {
+    padding: 9px 12px;
+    border-radius: 30px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.planificador-comensales {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 18px;
+    margin-bottom: 23px;
+    border-radius: 14px;
+    background: #F7E7DD;
+}
+
+.planificador-comensales label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.planificador-comensales label span {
+    color: var(--verde-oscuro);
+    font-size: 21px;
+}
+
+.planificador-comensales input {
+    width: 90px;
+    padding: 11px;
+    border: 1px solid var(--crema);
+    border-radius: 10px;
+    background: white;
+    text-align: center;
+    color: var(--texto);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.planificador-comidas {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.planificador-comida {
+    padding: 17px;
+    border: 1px solid var(--crema);
+    border-radius: 14px;
+    background: var(--crema-claro);
+}
+
+.planificador-comida-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.planificador-comida-titulo strong {
+    color: var(--texto);
+    font-size: 13px;
+}
+
+.planificador-comida-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 17px;
+}
+
+.planificador-comida select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--crema);
+    border-radius: 10px;
+    background: white;
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.planificador-detalle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.planificador-detalle span {
+    padding: 6px 9px;
+    border-radius: 20px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 10px;
+}
+
+.planificador-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 26px;
+    margin-top: 28px;
+    border: 1px solid var(--crema);
+    border-radius: 20px;
+    background: white;
+}
+
+.planificador-pie strong {
+    color: var(--texto);
+    font-size: 15px;
+}
+
+.planificador-pie p {
+    margin-top: 8px;
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.planificador-ver-planes {
+    display: block;
+    margin: 22px 0 0 auto;
+    padding: 13px 20px;
+    border: 1px solid var(--salvia-claro);
+    border-radius: 30px;
+    background: #E8EADD;
+    color: var(--verde-oscuro);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.planificador-ver-planes:hover {
+    background: var(--salvia-claro);
+}
+
+@media (max-width: 850px) {
+    .planificador-dias {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .planificador-herramientas,
+    .planificador-pie {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .planificador-modalidades button {
+        flex: 1;
+    }
+
+    .planificador-dia {
+        padding: 19px;
+    }
+
+    .planificador-dia-cabecera,
+    .planificador-comensales {
+        flex-wrap: wrap;
+    }
+
+    .planificador-pie .inv-boton {
+        width: 100%;
+    }
+}

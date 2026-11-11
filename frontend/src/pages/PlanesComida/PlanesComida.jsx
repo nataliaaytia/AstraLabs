@@ -135,6 +135,28 @@ function PlanesComida({ navegar, usuarioActual }) {
     };
 
 
+    const confirmarPlan = async (planId) => {
+        setMensaje(null);
+
+        try {
+            await inventarioApi.confirmarPlanComida(planId);
+
+            await cargarDatos();
+
+            setMensaje({
+                tipo: "exito",
+                texto:
+                    "Plan confirmado correctamente. " +
+                    "Ahora está disponible para registrar su preparación.",
+            });
+        } catch (error) {
+            setMensaje({
+                tipo: "error",
+                texto: error.message,
+            });
+        }
+    };
+
     const prepararPlan = async () => {
         if (!planAConfirmar || procesando !== null) return;
 
@@ -524,10 +546,22 @@ function PlanesComida({ navegar, usuarioActual }) {
                                                     </button>
                                                 </>
                                             ) : (
-                                                <p className="planes-borrador">
-                                                    Este plan debe confirmarse
-                                                    antes de su preparación.
-                                                </p>
+
+                                                <div className="planes-borrador-acciones">
+                                                    <p className="planes-borrador">
+                                                        Este plan está en borrador.
+                                                        Confírmalo para habilitar su preparación.
+                                                    </p>
+
+                                                    <button
+                                                        type="button"
+                                                        className="inv-boton"
+                                                        onClick={() => confirmarPlan(plan.id)}
+                                                    >
+                                                        Confirmar plan →
+                                                    </button>
+                                                </div>
+
                                             )}
                                         </div>
                                     </article>

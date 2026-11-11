@@ -21,6 +21,8 @@ import Donantes from "./pages/Donantes/Donantes";
 
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
 
+import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
+
 import Menus from "./pages/Menus/Menus";
 
 import Lotes from "./pages/Lotes/Lotes";
@@ -78,6 +80,7 @@ function App() {
       salidas: esAlmacen,
       mermas: esAlmacen,
       planesComida: esAlmacen,
+      planificadorComidas: esAlmacen,
       lotes: esAlmacen,
       menus: esAlmacen,
       donaciones: esRecepcion,
@@ -243,6 +246,14 @@ function App() {
         return esAlmacen
           ? <Lotes navegar={navegar} />
           : <Home navegar={navegar} />;
+
+      case "planificadorComidas":
+        return esAlmacen
+          ? (
+            <PlanificadorComidas navegar={navegar} />
+          )
+          : <Home navegar={navegar} />;
+
 
 
       case "planesComida":

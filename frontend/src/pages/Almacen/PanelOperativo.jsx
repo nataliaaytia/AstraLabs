@@ -45,6 +45,15 @@ function PanelOperativo({ navegar }) {
             pagina: "lotes",
         },
 
+
+        {
+            titulo: "Planificador de comidas",
+            descripcion: "Organiza menús diarios o semanales por comensales.",
+            icono: "▦",
+            pagina: "planificadorComidas",
+        },
+
+
     ];
 
     return (
