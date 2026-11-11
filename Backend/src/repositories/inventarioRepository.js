@@ -75,6 +75,7 @@ async function registrarExcedente({
   cantidadTotal,
   usuarioId,
   destino,
+  observaciones,
   movimientosFEFO,
 }) {
   const client = await pool.connect();
@@ -82,10 +83,10 @@ async function registrarExcedente({
     await client.query("BEGIN");
 
     const { rows: movRows } = await client.query(
-      `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, destino)
-       VALUES ('excedente', $1, $2, $3, $4)
+      `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, destino, observaciones)
+       VALUES ('excedente', $1, $2, $3, $4, $5)
        RETURNING id`,
-      [articuloId, cantidadTotal, usuarioId, destino],
+      [articuloId, cantidadTotal, usuarioId, destino, observaciones || null],
     );
     const movimientoId = movRows[0].id;
 
@@ -234,7 +235,23 @@ async function registrarEntrada({
   }
 }
 
+/**
+ * Historial de excedentes registrados (RF-09), el más reciente primero.
+ */
+async function listarExcedentes() {
+  const { rows } = await pool.query(
+    `SELECT m.id, m.articulo_id, a.nombre AS articulo, a.unidad_medida,
+            m.cantidad_total AS cantidad, m.destino, m.observaciones, m.fecha
+     FROM movimientos m
+     JOIN articulos a ON a.id = m.articulo_id
+     WHERE m.tipo = 'excedente'
+     ORDER BY m.fecha DESC, m.id DESC`,
+  );
+  return rows;
+}
+
 module.exports = {
+  listarExcedentes,
   obtenerLotesConStock,
   registrarSalida,
   obtenerStockArticulo,

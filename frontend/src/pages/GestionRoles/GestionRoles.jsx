@@ -11,11 +11,12 @@ function GestionRoles({
     usuarios,
     usuarioActual,
     cambiarRol,
+    errorCarga,
 }) {
     const [mensaje, setMensaje] = useState(null);
 
-    const asignarRol = (usuarioId, nuevoRol) => {
-        const resultado = cambiarRol(usuarioId, nuevoRol);
+    const asignarRol = async (usuarioId, nuevoRol) => {
+        const resultado = await cambiarRol(usuarioId, nuevoRol);
 
         setMensaje({
             texto: resultado.mensaje,
@@ -85,6 +86,16 @@ function GestionRoles({
                         </span>
                     </div>
 
+                    {errorCarga && (
+                        <div
+                            className="roles-mensaje roles-mensaje-error"
+                            role="alert"
+                        >
+                            <span aria-hidden="true">✕</span>
+                            {errorCarga}
+                        </div>
+                    )}
+
                     {mensaje && (
                         <div
                             className={`roles-mensaje roles-mensaje-${mensaje.tipo}`}
@@ -129,7 +140,7 @@ function GestionRoles({
 
                                                     <div className="roles-usuario-datos">
                                                         <strong>{usuario.nombre}</strong>
-                                                        <small>{usuario.correo}</small>
+                                                        <small>{usuario.email}</small>
                                                     </div>
                                                 </div>
                                             </td>

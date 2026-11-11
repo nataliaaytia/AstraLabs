@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Cabecera from "./components/Cabecera/Cabecera";
 import Home from "./pages/Home/Home";
@@ -8,66 +8,61 @@ import PanelOperativo from "./pages/Almacen/PanelOperativo";
 import Login from "./pages/Login/Login";
 
 import GestionRoles from "./pages/GestionRoles/GestionRoles";
-import { USUARIOS_DEMO, ROLES } from "./data/usuariosDemo";
-
+import { ROLES } from "./data/usuariosDemo";
 
 import Stock from "./pages/Stock/Stock";
 import Salidas from "./pages/Salidas/Salidas";
 import Mermas from "./pages/Mermas/Mermas";
 
-import Donaciones from "./pages/Donaciones/Donaciones";
-
-import Donantes from "./pages/Donantes/Donantes";
-
-import PlanesComida from "./pages/PlanesComida/PlanesComida";
-
-import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
-
-import Menus from "./pages/Menus/Menus";
-
-import Lotes from "./pages/Lotes/Lotes";
-
-import NecesidadesCriticas from "./pages/NecesidadesCriticas/NecesidadesCriticas";
+import { authApi } from "./services/authApi";
+import {
+  guardarSesion,
+  limpiarSesion,
+  obtenerToken,
+  obtenerUsuarioGuardado,
+  registrarAlExpirarSesion,
+} from "./services/api";
 
 import "./App.css";
-
-const CLAVE_USUARIOS = "amandita_123";
-const CLAVE_SESION = "callatericardo";
-
-function cargarUsuarios() {
-  try {
-    const guardados = JSON.parse(
-      localStorage.getItem(CLAVE_USUARIOS) || "{}"
-    );
-
-    return USUARIOS_DEMO.map((usuario) => ({
-      ...usuario,
-      rol: Object.values(ROLES).includes(guardados[usuario.id])
-        ? guardados[usuario.id]
-        : usuario.rol,
-    }));
-  } catch {
-    return USUARIOS_DEMO;
-  }
-}
 
 function App() {
   const [paginaActual, setPaginaActual] = useState("home");
 
-  const [usuarios, setUsuarios] = useState(cargarUsuarios);
+  const [usuarios, setUsuarios] = useState([]);
+  const [errorUsuarios, setErrorUsuarios] = useState("");
 
-  const [sesionId, setSesionId] = useState(() => {
-    return Number(localStorage.getItem(CLAVE_SESION)) || null;
-  });
-
-  const usuarioActual =
-    usuarios.find((u) => u.id === sesionId) || null;
+  // La sesión vive en el navegador (token + datos del usuario) y la valida el backend.
+  const [usuarioActual, setUsuarioActual] = useState(() =>
+    obtenerToken() ? obtenerUsuarioGuardado() : null
+  );
 
   const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
   const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
-  const esRecepcion = usuarioActual?.rol === ROLES.RECEPCION;
   const puedeVerAlmacen = esAdmin || esAlmacen;
 
+  // Si el backend responde 401 (token vencido), se cierra la sesión.
+  useEffect(() => {
+    registrarAlExpirarSesion(() => {
+      setUsuarioActual(null);
+      setPaginaActual("login");
+    });
+  }, []);
+
+  const cargarUsuarios = useCallback(async () => {
+    try {
+      const lista = await authApi.listarUsuarios();
+      setUsuarios(lista);
+      setErrorUsuarios("");
+    } catch (err) {
+      setErrorUsuarios(err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (paginaActual === "roles" && esAdmin) {
+      cargarUsuarios();
+    }
+  }, [paginaActual, esAdmin, cargarUsuarios]);
 
   const navegar = (pagina) => {
     const permisos = {
@@ -75,16 +70,9 @@ function App() {
       login: !usuarioActual,
       almacen: puedeVerAlmacen,
       roles: esAdmin,
-      necesidadesCriticas: esAdmin,
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
-      planesComida: esAlmacen,
-      planificadorComidas: esAlmacen,
-      lotes: esAlmacen,
-      menus: esAlmacen,
-      donaciones: esRecepcion,
-      donantes: esRecepcion,
     };
 
     if (!permisos[pagina]) {
@@ -97,38 +85,37 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const iniciarSesion = async (correo, contrasena) => {
+    try {
+      const { token, usuario } = await authApi.login(
+        correo.trim(),
+        contrasena
+      );
 
-  const iniciarSesion = (correo, contrasena) => {
-    const usuario = usuarios.find(
-      (u) =>
-        u.correo.toLowerCase() === correo.trim().toLowerCase() &&
-        u.contrasena === contrasena
-    );
+      guardarSesion({ token, usuario });
+      setUsuarioActual(usuario);
+      setPaginaActual("home");
 
-    if (!usuario) {
+      return {
+        exito: true,
+        mensaje: "Inicio de sesión correcto.",
+      };
+    } catch (err) {
       return {
         exito: false,
-        mensaje: "Correo o contraseña incorrectos.",
+        mensaje: err.message,
       };
     }
-
-    setSesionId(usuario.id);
-    localStorage.setItem(CLAVE_SESION, String(usuario.id));
-    setPaginaActual("home");
-
-    return {
-      exito: true,
-      mensaje: "Inicio de sesión correcto.",
-    };
   };
 
   const cerrarSesion = () => {
-    setSesionId(null);
-    localStorage.removeItem(CLAVE_SESION);
+    limpiarSesion();
+    setUsuarioActual(null);
+    setUsuarios([]);
     setPaginaActual("home");
   };
 
-  const cambiarRol = (usuarioId, nuevoRol) => {
+  const cambiarRol = async (usuarioId, nuevoRol) => {
     if (!esAdmin) {
       return {
         exito: false,
@@ -143,15 +130,6 @@ function App() {
       };
     }
 
-    const usuario = usuarios.find((u) => u.id === usuarioId);
-
-    if (!usuario) {
-      return {
-        exito: false,
-        mensaje: "Usuario no encontrado.",
-      };
-    }
-
     if (usuarioId === usuarioActual.id) {
       return {
         exito: false,
@@ -159,25 +137,25 @@ function App() {
       };
     }
 
-    const actualizados = usuarios.map((u) =>
-      u.id === usuarioId ? { ...u, rol: nuevoRol } : u
-    );
+    try {
+      await authApi.cambiarRol(usuarioId, nuevoRol);
 
-    setUsuarios(actualizados);
-
-    localStorage.setItem(
-      CLAVE_USUARIOS,
-      JSON.stringify(
-        Object.fromEntries(
-          actualizados.map((u) => [u.id, u.rol])
+      setUsuarios((anteriores) =>
+        anteriores.map((u) =>
+          u.id === usuarioId ? { ...u, rol: nuevoRol } : u
         )
-      )
-    );
+      );
 
-    return {
-      exito: true,
-      mensaje: "El rol se actualizó correctamente.",
-    };
+      return {
+        exito: true,
+        mensaje: "El rol se actualizó correctamente.",
+      };
+    } catch (err) {
+      return {
+        exito: false,
+        mensaje: err.message,
+      };
+    }
   };
 
   const mostrarPagina = () => {
@@ -185,7 +163,12 @@ function App() {
 
       case "almacen":
         if (esAdmin) {
-          return <Almacen navegar={navegar} />;
+          return (
+            <Almacen
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          );
         }
 
         if (esAlmacen) {
@@ -201,18 +184,11 @@ function App() {
             usuarios={usuarios}
             usuarioActual={usuarioActual}
             cambiarRol={cambiarRol}
+            errorCarga={errorUsuarios}
           />
         ) : (
           <Home navegar={navegar} />
         );
-
-
-      case "necesidadesCriticas":
-        return esAdmin
-          ? <NecesidadesCriticas navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-
 
       case "login":
         return usuarioActual ? (
@@ -240,39 +216,6 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
-
-
-      case "lotes":
-        return esAlmacen
-          ? <Lotes navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-      case "planificadorComidas":
-        return esAlmacen
-          ? (
-            <PlanificadorComidas navegar={navegar} />
-          )
-          : <Home navegar={navegar} />;
-
-
-
-      case "planesComida":
-        return esAlmacen
-          ? (
-            <PlanesComida
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
-
-
-      case "menus":
-        return esAlmacen
-          ? <Menus navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-
       case "mermas":
         return esAlmacen
           ? (
@@ -283,20 +226,7 @@ function App() {
           )
           : <Home navegar={navegar} />;
 
-      case "donaciones":
-        return esRecepcion
-          ? (
-            <Donaciones
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
 
-      case "donantes":
-        return esRecepcion
-          ? <Donantes navegar={navegar} />
-          : <Home navegar={navegar} />;
 
       default:
         return <Home navegar={navegar} />;
@@ -312,7 +242,6 @@ function App() {
         usuarioActual={usuarioActual}
         esAdmin={esAdmin}
         puedeVerAlmacen={puedeVerAlmacen}
-        esRecepcion={esRecepcion}
         cerrarSesion={cerrarSesion}
       />
 
