@@ -25,6 +25,8 @@ import Menus from "./pages/Menus/Menus";
 
 import Lotes from "./pages/Lotes/Lotes";
 
+import NecesidadesCriticas from "./pages/NecesidadesCriticas/NecesidadesCriticas";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -71,6 +73,7 @@ function App() {
       login: !usuarioActual,
       almacen: puedeVerAlmacen,
       roles: esAdmin,
+      necesidadesCriticas: esAdmin,
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
@@ -199,6 +202,14 @@ function App() {
         ) : (
           <Home navegar={navegar} />
         );
+
+
+      case "necesidadesCriticas":
+        return esAdmin
+          ? <NecesidadesCriticas navegar={navegar} />
+          : <Home navegar={navegar} />;
+
+
 
       case "login":
         return usuarioActual ? (

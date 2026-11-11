@@ -179,6 +179,24 @@ function Almacen({ navegar }) {
                         <small>Consultar existencias y alertas</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
+
+
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("necesidadesCriticas")}
+                    >
+                        <span className="almacen-acceso-icono">▥</span>
+
+                        <strong>Necesidades críticas</strong>
+
+                        <small>
+                            Reporte de artículos prioritarios para donaciones
+                        </small>
+
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
                 </div>
 
 
