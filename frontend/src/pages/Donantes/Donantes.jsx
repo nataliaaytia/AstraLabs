@@ -16,12 +16,18 @@ const FORMULARIO_INICIAL = {
 };
 
 function Donantes({ navegar }) {
-    const [donantes, setDonantes] = useState(cargarDonantes);
+    const [donantes, setDonantes] = useState([]);
     const [formulario, setFormulario] = useState({
         ...FORMULARIO_INICIAL,
     });
     const [busqueda, setBusqueda] = useState("");
     const [mensaje, setMensaje] = useState(null);
+
+    useEffect(() => {
+        inventarioApi.listarDonantes()
+            .then(setDonantes)
+            .catch((error) => setMensaje({ tipo: "error", texto: error.message }));
+    }, []);
 
     const cambiarCampo = (evento) => {
         const { name, value } = evento.target;
@@ -34,7 +40,7 @@ function Donantes({ navegar }) {
         setMensaje(null);
     };
 
-    const guardarDonante = (evento) => {
+    const guardarDonante = async (evento) => {
         evento.preventDefault();
         setMensaje(null);
 
@@ -61,7 +67,7 @@ function Donantes({ navegar }) {
 
         return (
             donante.nombre.toLowerCase().includes(texto) ||
-            donante.contacto.toLowerCase().includes(texto) ||
+            (donante.contacto || "").toLowerCase().includes(texto) ||
             donante.tipo.includes(texto)
         );
     });
@@ -305,8 +311,8 @@ function Donantes({ navegar }) {
                                                 <p>{donante.telefono}</p>
                                             )}
 
-                                            {donante.correo && (
-                                                <p>{donante.correo}</p>
+                                            {(donante.email || donante.correo) && (
+                                                <p>{donante.email || donante.correo}</p>
                                             )}
                                         </div>
                                     </article>

@@ -8,6 +8,8 @@ import PanelOperativo from "./pages/Almacen/PanelOperativo";
 import Login from "./pages/Login/Login";
 
 import GestionRoles from "./pages/GestionRoles/GestionRoles";
+import Donaciones from "./pages/Donaciones/Donaciones";
+import Donantes from "./pages/Donantes/Donantes";
 import { ROLES } from "./data/usuariosDemo";
 
 import Stock from "./pages/Stock/Stock";
@@ -42,6 +44,7 @@ function App() {
 
   const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
   const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
+  const esRecepcion = usuarioActual?.rol === ROLES.RECEPCION;
   const puedeVerAlmacen = esAdmin || esAlmacen;
 
   // Si el backend responde 401 (token vencido), se cierra la sesión.
@@ -74,6 +77,8 @@ function App() {
       login: !usuarioActual,
       almacen: puedeVerAlmacen,
       roles: esAdmin,
+      donaciones: esRecepcion,
+      donantes: esRecepcion,
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
@@ -186,6 +191,11 @@ function App() {
         return <Home navegar={navegar} />;
 
 
+      case "donaciones":
+        return esRecepcion ? <Donaciones navegar={navegar} usuarioActual={usuarioActual} /> : <Home navegar={navegar} />;
+      case "donantes":
+        return esRecepcion ? <Donantes navegar={navegar} /> : <Home navegar={navegar} />;
+
       case "roles":
         return esAdmin ? (
           <GestionRoles
@@ -257,6 +267,7 @@ function App() {
         navegar={navegar}
         usuarioActual={usuarioActual}
         esAdmin={esAdmin}
+        esRecepcion={esRecepcion}
         puedeVerAlmacen={puedeVerAlmacen}
         cerrarSesion={cerrarSesion}
       />

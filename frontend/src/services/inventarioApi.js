@@ -25,6 +25,24 @@ export const inventarioApi = {
         return solicitar(`/api/articulos/${id}/stock`);
     },
 
+    listarDonantes() {
+        return solicitar("/api/donantes");
+    },
+
+    crearDonante(datos) {
+        return solicitar("/api/donantes", {
+            method: "POST",
+            body: JSON.stringify(datos),
+        });
+    },
+
+    registrarDonacion(datos) {
+        return solicitar("/api/entradas", {
+            method: "POST",
+            body: JSON.stringify(datos),
+        });
+    },
+
     registrarSalida(datos) {
         return solicitar("/api/salidas", {
             method: "POST",

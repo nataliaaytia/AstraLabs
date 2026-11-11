@@ -24,7 +24,7 @@ const FORMULARIO_INICIAL = {
 function Donaciones({ navegar, usuarioActual }) {
     const [articulos, setArticulos] = useState([]);
     const [donaciones, setDonaciones] = useState([]);
-    const [donantes, setDonantes] = useState(cargarDonantes);
+    const [donantes, setDonantes] = useState([]);
     const [formulario, setFormulario] = useState({
         ...FORMULARIO_INICIAL,
     });
@@ -37,7 +37,7 @@ function Donaciones({ navegar, usuarioActual }) {
 
         try {
             const lista = await inventarioApi.listarArticulos();
-            const historial = await inventarioApi.listarDonaciones();
+            const listaDonantes = await inventarioApi.listarDonantes();
 
             setArticulos(lista);
             setDonaciones(historial);
@@ -78,7 +78,7 @@ function Donaciones({ navegar, usuarioActual }) {
         try {
 
             const donanteSeleccionado = donantes.find(
-                (d) => d.id === formulario.donanteId
+                (d) => String(d.id) === String(formulario.donanteId)
             );
 
             if (!donanteSeleccionado) {
@@ -102,7 +102,7 @@ function Donaciones({ navegar, usuarioActual }) {
                 tipo: "exito",
                 texto:
                     `Donación registrada correctamente. ` +
-                    `Stock actualizado: ${resultado.stockActual}.`,
+                    `Entrada registrada. Movimiento #${resultado.movimientoId}. Consulta Stock para ver el total actualizado.`,
             });
         } catch (error) {
             setMensaje({
@@ -330,7 +330,7 @@ function Donaciones({ navegar, usuarioActual }) {
                             <div className="donaciones-sin-registros">
                                 ♡
                                 <p>
-                                    Todavía no se registraron donaciones.
+                                    Aún no se registraron donaciones en esta sesión.
                                 </p>
                             </div>
                         ) : (
