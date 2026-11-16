@@ -428,3 +428,5 @@ function NecesidadesCriticas({ navegar }) {
 }
 
 export default NecesidadesCriticas;
+
+//me faltaba conectar esto al backend perdon
