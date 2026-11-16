@@ -21,6 +21,7 @@ function Donantes({ navegar }) {
     const [mensaje, setMensaje] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
+    const [errorCarga, setErrorCarga] = useState("");
 
     const cargarDatos = async () => {
         setCargando(true);
