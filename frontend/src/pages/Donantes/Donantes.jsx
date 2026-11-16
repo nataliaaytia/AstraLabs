@@ -1,9 +1,6 @@
 
-import { useState } from "react";
-import {
-    cargarDonantes,
-    registrarDonante,
-} from "../../data/donantes";
+import { useEffect, useState } from "react";
+import { inventarioApi } from "../../services/inventarioApi";
 import "../InventarioComun.css";
 import "./Donantes.css";
 
@@ -16,12 +13,39 @@ const FORMULARIO_INICIAL = {
 };
 
 function Donantes({ navegar }) {
-    const [donantes, setDonantes] = useState(cargarDonantes);
+    const [donantes, setDonantes] = useState([]);
     const [formulario, setFormulario] = useState({
         ...FORMULARIO_INICIAL,
     });
     const [busqueda, setBusqueda] = useState("");
     const [mensaje, setMensaje] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const [guardando, setGuardando] = useState(false);
+
+    const cargarDatos = async () => {
+        setCargando(true);
+
+        try {
+            const datos = await inventarioApi.listarDonantes();
+
+            if (!Array.isArray(datos)) {
+                throw new Error("El backend no devolvió una lista de donantes.");
+            }
+
+            setDonantes(datos);
+        } catch (error) {
+            setMensaje({
+                tipo: "error",
+                texto: error.message || "No se pudieron cargar los donantes.",
+            });
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargarDatos();
+    }, []);
 
     const cambiarCampo = (evento) => {
         const { name, value } = evento.target;
@@ -34,35 +58,74 @@ function Donantes({ navegar }) {
         setMensaje(null);
     };
 
-    const guardarDonante = (evento) => {
+    const guardarDonante = async (evento) => {
         evento.preventDefault();
         setMensaje(null);
 
-        try {
-            const nuevo = registrarDonante(formulario);
+        if (!formulario.nombre.trim()) {
+            setMensaje({
+                tipo: "error",
+                texto: "Ingresa el nombre del donante.",
+            });
+            return;
+        }
 
-            setDonantes(cargarDonantes());
+        if (!formulario.contacto.trim()) {
+            setMensaje({
+                tipo: "error",
+                texto: "Ingresa el nombre de contacto.",
+            });
+            return;
+        }
+
+        if (!formulario.telefono.trim() && !formulario.correo.trim()) {
+            setMensaje({
+                tipo: "error",
+                texto: "Ingresa al menos un teléfono o correo electrónico.",
+            });
+            return;
+        }
+
+        setGuardando(true);
+
+        try {
+            await inventarioApi.crearDonante({
+                tipo: formulario.tipo,
+                nombre: formulario.nombre.trim(),
+                contacto: formulario.contacto.trim(),
+                telefono: formulario.telefono.trim(),
+                correo: formulario.correo.trim(),
+            });
+
+            await cargarDatos();
+
             setFormulario({ ...FORMULARIO_INICIAL });
 
             setMensaje({
                 tipo: "exito",
-                texto: `"${nuevo.nombre}" se registró correctamente.`,
+                texto: `"${formulario.nombre}" se registró correctamente.`,
             });
         } catch (error) {
             setMensaje({
                 tipo: "error",
-                texto: error.message,
+                texto: error.message || "No se pudo registrar el donante.",
             });
+        } finally {
+            setGuardando(false);
         }
     };
 
     const filtrados = donantes.filter((donante) => {
         const texto = busqueda.toLowerCase().trim();
 
+        const nombre = String(donante.nombre || "").toLowerCase();
+        const contacto = String(donante.contacto || "").toLowerCase();
+        const tipo = String(donante.tipo || "").toLowerCase();
+
         return (
-            donante.nombre.toLowerCase().includes(texto) ||
-            donante.contacto.toLowerCase().includes(texto) ||
-            donante.tipo.includes(texto)
+            nombre.includes(texto) ||
+            contacto.includes(texto) ||
+            tipo.includes(texto)
         );
     });
 
@@ -132,8 +195,7 @@ function Donantes({ navegar }) {
                                 className={`inv-mensaje ${mensaje.tipo}`}
                                 role="status"
                             >
-                                {mensaje.tipo === "exito" ? "✓" : "✕"}
-                                {" "}
+                                {mensaje.tipo === "exito" ? "✓" : "✕"}{" "}
                                 {mensaje.texto}
                             </div>
                         )}
@@ -246,8 +308,11 @@ function Donantes({ navegar }) {
                                 <button
                                     type="submit"
                                     className="inv-boton"
+                                    disabled={guardando}
                                 >
-                                    Registrar donante →
+                                    {guardando
+                                        ? "Registrando..."
+                                        : "Registrar donante →"}
                                 </button>
                             </div>
                         </form>
@@ -256,6 +321,7 @@ function Donantes({ navegar }) {
                     <div className="donantes-directorio">
                         <div className="donantes-directorio-cabecera">
                             <span>✦ DIRECTORIO</span>
+
                             <h2>Donantes registrados</h2>
 
                             <input
@@ -269,7 +335,11 @@ function Donantes({ navegar }) {
                             />
                         </div>
 
-                        {filtrados.length === 0 ? (
+                        {cargando ? (
+                            <div className="inv-vacio">
+                                Cargando donantes...
+                            </div>
+                        ) : filtrados.length === 0 ? (
                             <div className="inv-vacio">
                                 {donantes.length === 0
                                     ? "Todavía no hay donantes registrados."
@@ -289,7 +359,9 @@ function Donantes({ navegar }) {
                                         </span>
 
                                         <div className="donantes-registro-info">
-                                            <strong>{donante.nombre}</strong>
+                                            <strong>
+                                                {donante.nombre}
+                                            </strong>
 
                                             <small>
                                                 {donante.tipo === "empresa"
@@ -305,8 +377,10 @@ function Donantes({ navegar }) {
                                                 <p>{donante.telefono}</p>
                                             )}
 
-                                            {donante.correo && (
-                                                <p>{donante.correo}</p>
+                                            {(donante.email || donante.correo) && (
+                                                <p>
+                                                    {donante.email || donante.correo}
+                                                </p>
                                             )}
                                         </div>
                                     </article>

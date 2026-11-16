@@ -6,6 +6,7 @@ import "./NecesidadesCriticas.css";
 
 function NecesidadesCriticas({ navegar }) {
     const [articulos, setArticulos] = useState([]);
+    const [necesidades, setNecesidades] = useState([]);
     const [filtro, setFiltro] = useState("todos");
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
@@ -14,18 +15,24 @@ function NecesidadesCriticas({ navegar }) {
     const cargarReporte = async () => {
         setCargando(true);
         setError("");
+        setMensaje("");
 
         try {
-            const datos = await inventarioApi.listarArticulos();
+            const [catalogo, faltantes] = await Promise.all([
+                inventarioApi.listarArticulos(),
+                inventarioApi.listarNecesidadesCriticas(),
+            ]);
 
-            if (!Array.isArray(datos)) {
-                throw new Error("No se pudo obtener el inventario.");
+            if (!Array.isArray(catalogo) || !Array.isArray(faltantes)) {
+                throw new Error("No se pudo obtener el reporte de inventario.");
             }
 
-            setArticulos(datos);
+            setArticulos(catalogo);
+            setNecesidades(faltantes);
         } catch (err) {
             setArticulos([]);
-            setError(err.message);
+            setNecesidades([]);
+            setError(err.message || "Error al cargar necesidades críticas.");
         } finally {
             setCargando(false);
         }
@@ -35,44 +42,49 @@ function NecesidadesCriticas({ navegar }) {
         cargarReporte();
     }, []);
 
-    const reporte = articulos.map((articulo) => {
-        const actual = Number(articulo.stock_actual) || 0;
-        const minimo = Number(articulo.stock_minimo) || 0;
-        const faltante = Math.max(0, minimo - actual);
+    const catalogoPorId = new Map(
+        articulos.map((articulo) => [
+            Number(articulo.id),
+            articulo,
+        ])
+    );
+
+    const prioridades = necesidades.map((necesidad) => {
+        const articulo = catalogoPorId.get(
+            Number(necesidad.articulo_id)
+        );
+
+        const actual = Number(necesidad.stock_actual) || 0;
+        const minimo = Number(necesidad.stock_minimo) || 0;
+        const faltante = Number(necesidad.deficit) || 0;
 
         const porcentajeFaltante = minimo > 0
             ? Math.min(100, (faltante / minimo) * 100)
             : 0;
 
-        let estado = "saludable";
+        let estado = "bajo";
 
-        if (minimo <= 0) {
-            estado = "sin-minimo";
-        } else if (actual === 0) {
+        if (actual <= 0) {
             estado = "agotado";
         } else if (actual <= minimo * 0.5) {
             estado = "critico";
-        } else if (actual < minimo) {
-            estado = "bajo";
         }
 
         return {
-            ...articulo,
+            id: necesidad.articulo_id,
+            nombre: necesidad.articulo || articulo?.nombre || "Artículo sin nombre",
+            unidad_medida: articulo?.unidad_medida || "unidades",
             actual,
             minimo,
             faltante,
             porcentajeFaltante,
             estado,
         };
-    });
-
-    const prioridades = reporte
-        .filter((a) => a.faltante > 0)
-        .sort((a, b) =>
-            b.porcentajeFaltante - a.porcentajeFaltante ||
-            b.faltante - a.faltante ||
-            a.nombre.localeCompare(b.nombre)
-        );
+    }).sort((a, b) =>
+        b.porcentajeFaltante - a.porcentajeFaltante ||
+        b.faltante - a.faltante ||
+        a.nombre.localeCompare(b.nombre)
+    );
 
     const agotados = prioridades.filter(
         (a) => a.estado === "agotado"
@@ -80,22 +92,25 @@ function NecesidadesCriticas({ navegar }) {
 
     const criticos = prioridades.filter(
         (a) => a.estado === "critico" ||
-            a.estado === "agotado"
+               a.estado === "agotado"
     ).length;
 
-    const saludables = reporte.filter(
-        (a) => a.estado === "saludable"
-    ).length;
+    const saludables = articulos.filter((a) => {
+        const minimo = Number(a.stock_minimo) || 0;
+        return minimo > 0 && Number(a.stock_actual) >= minimo;
+    }).length;
 
-    const sinMinimo = reporte.filter(
-        (a) => a.estado === "sin-minimo"
+    const sinMinimo = articulos.filter(
+        (a) => (Number(a.stock_minimo) || 0) <= 0
     ).length;
 
     const visibles = prioridades.filter((articulo) => {
         if (filtro === "todos") return true;
+
         if (filtro === "criticos") {
             return ["critico", "agotado"].includes(articulo.estado);
         }
+
         return articulo.estado === filtro;
     });
 
@@ -112,7 +127,7 @@ function NecesidadesCriticas({ navegar }) {
     };
 
     const formatear = (numero) =>
-        Number(numero.toFixed(3)).toLocaleString("es-BO");
+        Number(Number(numero).toFixed(3)).toLocaleString("es-BO");
 
     const textoSolicitud = [
         "SOLICITUD DE DONACIONES - CASA AMANDITA",
@@ -142,6 +157,7 @@ function NecesidadesCriticas({ navegar }) {
     return (
         <section className="inv-pagina necesidades-pagina">
             <div className="inv-contenedor">
+
                 <button
                     type="button"
                     className="inv-volver"
@@ -237,9 +253,11 @@ function NecesidadesCriticas({ navegar }) {
                             <option value="todos">
                                 Todos los faltantes
                             </option>
+
                             <option value="criticos">
                                 Críticos y agotados
                             </option>
+
                             <option value="bajo">
                                 Stock bajo
                             </option>
@@ -250,10 +268,16 @@ function NecesidadesCriticas({ navegar }) {
                         <div className="inv-vacio">
                             Analizando el inventario...
                         </div>
+                    ) : error ? (
+                        <div className="inv-vacio">
+                            No se pudo cargar el reporte.
+                        </div>
                     ) : visibles.length === 0 ? (
                         <div className="necesidades-vacio">
                             <span>♡</span>
+
                             <h3>No hay faltantes en esta categoría</h3>
+
                             <p>
                                 Los artículos con mínimos definidos
                                 no presentan las necesidades
@@ -272,14 +296,17 @@ function NecesidadesCriticas({ navegar }) {
                                             <span className="necesidades-posicion">
                                                 {indice + 1}
                                             </span>
+
                                             <strong>
                                                 {articulo.nombre}
                                             </strong>
                                         </div>
 
-                                        <span className={
-                                            `necesidades-estado ${articulo.estado}`
-                                        }>
+                                        <span
+                                            className={
+                                                `necesidades-estado ${articulo.estado}`
+                                            }
+                                        >
                                             {nombreEstado(articulo.estado)}
                                         </span>
                                     </div>
@@ -301,8 +328,7 @@ function NecesidadesCriticas({ navegar }) {
                                                 `necesidades-barra-relleno ${articulo.estado}`
                                             }
                                             style={{
-                                                width:
-                                                    `${articulo.porcentajeFaltante}%`,
+                                                width: `${articulo.porcentajeFaltante}%`,
                                             }}
                                         />
                                     </div>
@@ -324,8 +350,7 @@ function NecesidadesCriticas({ navegar }) {
 
                                         <span className="necesidades-faltante">
                                             Faltan{" "}
-                                            {formatear(articulo.faltante)}
-                                            {" "}
+                                            {formatear(articulo.faltante)}{" "}
                                             {articulo.unidad_medida || "unidades"}
                                         </span>
                                     </div>
@@ -357,12 +382,12 @@ function NecesidadesCriticas({ navegar }) {
                         </div>
                     </div>
 
-                    {prioridades.length === 0 ? (
+                    {!cargando && !error && prioridades.length === 0 ? (
                         <p className="necesidades-sin-solicitud">
                             No existen faltantes registrados
                             que requieran una solicitud.
                         </p>
-                    ) : (
+                    ) : cargando || error ? null : (
                         <>
                             <textarea
                                 className="necesidades-texto-solicitud"

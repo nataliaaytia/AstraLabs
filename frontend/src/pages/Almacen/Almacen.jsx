@@ -8,7 +8,6 @@ import { inventarioApi } from "../../services/inventarioApi";
 
 import "./Almacen.css";
 
-// El backend usa snake_case; la pantalla trabaja con estos nombres.
 const normalizarArticulo = (a) => ({
     id: a.id,
     nombre: a.nombre,
@@ -61,9 +60,9 @@ function Almacen({ navegar, usuarioActual }) {
         cargarDatos();
     }, [cargarDatos]);
 
-    // Registrar un artículo nuevo
     const registrarArticulo = async (nuevoArticulo) => {
         const nombre = nuevoArticulo.nombre.trim().replace(/\s+/g, " ");
+
         const categoria = categorias.find(
             (c) => c.nombre === nuevoArticulo.categoria
         );
@@ -121,24 +120,40 @@ function Almacen({ navegar, usuarioActual }) {
         };
     };
 
-    // HU-09
-    const registrarExcedente = async ({ articuloId, cantidad, destino, observaciones }) => {
+    const registrarExcedente = async ({
+        articuloId,
+        cantidad,
+        destino,
+        observaciones
+    }) => {
         const articulo = articulos.find((a) => a.id === articuloId);
 
         if (!articulo) {
-            return { exito: false, mensaje: "El artículo ya no existe en el catálogo." };
+            return {
+                exito: false,
+                mensaje: "El artículo ya no existe en el catálogo.",
+            };
         }
 
         if (!Number.isFinite(cantidad) || cantidad <= 0) {
-            return { exito: false, mensaje: "Ingresa una cantidad mayor a cero." };
+            return {
+                exito: false,
+                mensaje: "Ingresa una cantidad mayor a cero.",
+            };
         }
 
         if (!DESTINOS_EXCEDENTE.includes(destino)) {
-            return { exito: false, mensaje: "Selecciona el destino del excedente." };
+            return {
+                exito: false,
+                mensaje: "Selecciona el destino del excedente.",
+            };
         }
 
         if (!usuarioActual?.id) {
-            return { exito: false, mensaje: "Necesitas iniciar sesión." };
+            return {
+                exito: false,
+                mensaje: "Necesitas iniciar sesión.",
+            };
         }
 
         try {
@@ -160,10 +175,12 @@ function Almacen({ navegar, usuarioActual }) {
             texto: `"${articulo.nombre}" se marcó como excedente con destino: ${destino}.`,
         });
 
-        return { exito: true, mensaje: "Excedente registrado correctamente." };
+        return {
+            exito: true,
+            mensaje: "Excedente registrado correctamente.",
+        };
     };
 
-    // Buscar y filtrar
     const articulosFiltrados = articulos.filter((articulo) => {
         const coincideNombre = articulo.nombre
             .toLowerCase()
@@ -212,11 +229,21 @@ function Almacen({ navegar, usuarioActual }) {
                         <small>Consultar existencias y alertas</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
+
+                    <button
+                        className="almacen-acceso"
+                        onClick={() => navegar("necesidadesCriticas")}
+                    >
+                        <span className="almacen-acceso-icono">✧</span>
+                        <strong>Necesidades críticas</strong>
+                        <small>
+                            Consultar faltantes y preparar solicitudes de donación
+                        </small>
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
                 </div>
 
-
                 <div className="almacen-encabezado">
-
                     <button
                         className="almacen-nuevo"
                         onClick={() => {
@@ -242,9 +269,13 @@ function Almacen({ navegar, usuarioActual }) {
                     </div>
 
                     <div className="almacen-estadistica almacen-estadistica-especial">
-                        <span aria-hidden="true" className="almacen-estadistica-corazon">
+                        <span
+                            aria-hidden="true"
+                            className="almacen-estadistica-corazon"
+                        >
                             ♡
                         </span>
+
                         <p>
                             Organizando recursos,
                             <br />
@@ -261,7 +292,9 @@ function Almacen({ navegar, usuarioActual }) {
                         <span aria-hidden="true">
                             {mensaje.tipo === "exito" ? "✓" : "✕"}
                         </span>
+
                         {mensaje.texto}
+
                         <button
                             onClick={() => setMensaje(null)}
                             aria-label="Cerrar mensaje"
@@ -303,7 +336,10 @@ function Almacen({ navegar, usuarioActual }) {
                             <option value="">Todas las categorías</option>
 
                             {nombresCategorias.map((categoria) => (
-                                <option key={categoria} value={categoria}>
+                                <option
+                                    key={categoria}
+                                    value={categoria}
+                                >
                                     {categoria}
                                 </option>
                             ))}
@@ -331,7 +367,9 @@ function Almacen({ navegar, usuarioActual }) {
                                                     <span className="almacen-articulo-icono">
                                                         ✿
                                                     </span>
-                                                    <strong>{articulo.nombre}</strong>
+                                                    <strong>
+                                                        {articulo.nombre}
+                                                    </strong>
                                                 </div>
                                             </td>
 
@@ -368,11 +406,13 @@ function Almacen({ navegar, usuarioActual }) {
                         </div>
                     ) : (
                         <div className="almacen-vacio">
-                            <div className="almacen-vacio-icono">౨ৎ⋆˚｡⋆</div>
+                            <div className="almacen-vacio-icono">
+                                ౨ৎ⋆˚｡⋆
+                            </div>
 
                             <h3>
                                 {articulos.length === 0
-                                    ? "Nuestro catálogo está vacio w"
+                                    ? "Nuestro catálogo está vacío"
                                     : "No encontramos artículos"}
                             </h3>
 
@@ -397,7 +437,10 @@ function Almacen({ navegar, usuarioActual }) {
                     <div className="almacen-catalogo-cabecera">
                         <div>
                             <h2>Excedentes registrados</h2>
-                            <p>Historial de artículos marcados como excedente y su destino.</p>
+                            <p>
+                                Historial de artículos marcados
+                                como excedente y su destino.
+                            </p>
                         </div>
 
                         <span className="almacen-total">
@@ -421,12 +464,27 @@ function Almacen({ navegar, usuarioActual }) {
                                 <tbody>
                                     {excedentes.map((excedente) => (
                                         <tr key={excedente.id}>
-                                            <td><strong>{excedente.articulo}</strong></td>
-                                            <td>{excedente.cantidad} {excedente.unidadMedida}</td>
-                                            <td>{excedente.destino}</td>
-                                            <td>{excedente.observaciones || "—"}</td>
                                             <td>
-                                                {new Date(excedente.fecha).toLocaleDateString("es-BO")}
+                                                <strong>
+                                                    {excedente.articulo}
+                                                </strong>
+                                            </td>
+
+                                            <td>
+                                                {excedente.cantidad}{" "}
+                                                {excedente.unidadMedida}
+                                            </td>
+
+                                            <td>{excedente.destino}</td>
+
+                                            <td>
+                                                {excedente.observaciones || "—"}
+                                            </td>
+
+                                            <td>
+                                                {new Date(
+                                                    excedente.fecha
+                                                ).toLocaleDateString("es-BO")}
                                             </td>
                                         </tr>
                                     ))}
@@ -446,7 +504,6 @@ function Almacen({ navegar, usuarioActual }) {
                 >
                     ← Volver al inicio
                 </button>
-
             </div>
 
             <ModalExcedente
@@ -464,4 +521,5 @@ function Almacen({ navegar, usuarioActual }) {
         </section>
     );
 }
+
 export default Almacen;
