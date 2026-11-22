@@ -15,11 +15,13 @@ const planesComidaRouter = require("./routes/planesComida");
 const lotesRouter = require("./routes/lotes");
 
 //Seguridad
-const { autenticar } = require("./middleware/authMiddleware");
+const { autenticar, requiereRol } = require("./middleware/authMiddleware");
+const { registrarFiltros } = require("./middleware/logFiltros");
 
 const app = express();
 app.use(cors()); // en producción: restringir a los orígenes reales del frontend
 app.use(express.json());
+app.use(registrarFiltros);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", servicio: "API Inventario - AstraLabs" });
