@@ -1,5 +1,6 @@
 const { descontarPorFEFO } = require("../services/fefoService");
 const pool = require("../db/pool");
+const { validarFecha } = require("../utils/filtros");
 
 /**
  * Capa de Repositorios — plan de comidas (RF-17).
@@ -15,14 +16,19 @@ async function crearPlan({ fecha, tipoComida, menuId, comensales, usuarioId }) {
   return rows[0];
 }
 
-async function listarPlanes({ fecha } = {}) {
+async function listarPlanes({ fecha, desde, hasta, tipoComida, estado } = {}) {
   const params = [];
-  let where = "";
-
-  if (fecha) {
-    params.push(fecha);
-    where = `WHERE p.fecha = $${params.length}`;
-  }
+  const cond = [];
+  const add = (sql, valor) => {
+    params.push(valor);
+    cond.push(sql.replace("?", `$${params.length}`));
+  };
+  if (validarFecha(fecha, "fecha")) add("p.fecha = ?", fecha);
+  if (validarFecha(desde, "desde")) add("p.fecha >= ?", desde);
+  if (validarFecha(hasta, "hasta")) add("p.fecha <= ?", hasta);
+  if (tipoComida) add("p.tipo_comida = ?", tipoComida);
+  if (estado) add("p.estado = ?", estado);
+  const where = cond.length ? `WHERE ${cond.join(" AND ")}` : "";
 
   const { rows } = await pool.query(
     `SELECT p.id, p.fecha::text AS fecha, p.tipo_comida, p.comensales, p.estado,

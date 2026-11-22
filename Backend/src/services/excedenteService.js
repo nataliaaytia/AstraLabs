@@ -32,8 +32,8 @@ async function registrarExcedente({
   });
 }
 
-async function listarExcedentes() {
-  return inventarioRepository.listarExcedentes();
+async function listarExcedentes(filtros = {}) {
+  return inventarioRepository.listarExcedentes(filtros);
 }
 
 module.exports = { registrarExcedente, listarExcedentes };

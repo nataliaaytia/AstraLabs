@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const menus = await menuService.listarMenus();
+    const menus = await menuService.listarMenus({ q: req.query.q?.trim() });
     res.json(menus);
   } catch (err) {
     res.status(500).json({ error: err.message });

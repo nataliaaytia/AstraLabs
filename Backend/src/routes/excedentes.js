@@ -6,10 +6,14 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const excedentes = await excedenteService.listarExcedentes();
+    const excedentes = await excedenteService.listarExcedentes({
+      desde: req.query.desde,
+      hasta: req.query.hasta,
+      q: req.query.q?.trim(),
+    });
     res.json(excedentes);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 

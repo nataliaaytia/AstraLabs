@@ -8,6 +8,10 @@ router.get("/", async (req, res) => {
   try {
     const planes = await planComidaService.listarPlanes({
       fecha: req.query.fecha,
+      desde: req.query.desde,
+      hasta: req.query.hasta,
+      tipoComida: req.query.tipo_comida,
+      estado: req.query.estado,
     });
     res.json(planes);
   } catch (err) {

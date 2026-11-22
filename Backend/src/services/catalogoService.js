@@ -7,15 +7,19 @@ async function listarCategorias() {
   return catalogoRepository.listarCategorias();
 }
 
-async function listarArticulos({ categoriaId } = {}) {
+async function listarArticulos({ categoriaId, q, bajoMinimo } = {}) {
+  const filtros = { q, bajoMinimo };
   if (categoriaId !== undefined && categoriaId !== null) {
     const idNumerico = Number(categoriaId);
     if (!Number.isInteger(idNumerico) || idNumerico <= 0) {
       throw new Error("categoriaId debe ser un número entero positivo");
     }
-    return catalogoRepository.listarArticulos({ categoriaId: idNumerico });
+    return catalogoRepository.listarArticulos({
+      ...filtros,
+      categoriaId: idNumerico,
+    });
   }
-  return catalogoRepository.listarArticulos({});
+  return catalogoRepository.listarArticulos(filtros);
 }
 
 async function registrarArticulo({

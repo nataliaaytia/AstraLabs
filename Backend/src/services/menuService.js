@@ -4,8 +4,8 @@ const menuRepository = require("../repositories/menuRepository");
  * Servicio de Menús (RF-16): registra un menú con sus ingredientes y
  * cantidad por porción, para reutilizarlo al planificar (RF-17).
  */
-async function listarMenus() {
-  return menuRepository.listarMenus();
+async function listarMenus(filtros = {}) {
+  return menuRepository.listarMenus(filtros);
 }
 
 async function obtenerMenu(menuId) {

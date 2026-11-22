@@ -53,8 +53,8 @@ async function registrarPlan({
   }
 }
 
-async function listarPlanes({ fecha } = {}) {
-  return planComidaRepository.listarPlanes({ fecha });
+async function listarPlanes(filtros = {}) {
+  return planComidaRepository.listarPlanes(filtros);
 }
 
 async function confirmarPlan({ planId, usuarioId }) {

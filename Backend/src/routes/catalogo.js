@@ -16,6 +16,8 @@ router.get("/articulos", async (req, res) => {
   try {
     const articulos = await catalogoService.listarArticulos({
       categoriaId: req.query.categoria_id,
+      q: req.query.q?.trim(),
+      bajoMinimo: req.query.bajo_minimo === "true",
     });
     res.json(articulos);
   } catch (err) {

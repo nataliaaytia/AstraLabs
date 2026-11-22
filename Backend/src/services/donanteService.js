@@ -23,8 +23,8 @@ async function registrarDonante({ nombre, tipo, contacto, telefono, email }) {
   });
 }
 
-async function listarDonantes() {
-  return donanteRepository.listarDonantes();
+async function listarDonantes(filtros = {}) {
+  return donanteRepository.listarDonantes(filtros);
 }
 
 module.exports = { registrarDonante, listarDonantes };

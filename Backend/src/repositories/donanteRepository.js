@@ -14,11 +14,25 @@ async function crearDonante({ nombre, tipo, contacto, telefono, email }) {
   return rows[0];
 }
 
-async function listarDonantes() {
+async function listarDonantes({ q, tipo } = {}) {
+  const cond = [];
+  const params = [];
+  if (q) {
+    params.push(`%${q}%`);
+    cond.push(
+      `(nombre ILIKE $${params.length} OR contacto ILIKE $${params.length})`,
+    );
+  }
+  if (tipo) {
+    params.push(tipo);
+    cond.push(`tipo = $${params.length}`);
+  }
+  const where = cond.length ? `WHERE ${cond.join(" AND ")}` : "";
   const { rows } = await pool.query(
     `SELECT id, nombre, tipo, contacto, telefono, email, created_at
-     FROM donantes
+     FROM donantes ${where}
      ORDER BY nombre`,
+    params,
   );
   return rows;
 }

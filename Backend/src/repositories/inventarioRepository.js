@@ -1,4 +1,5 @@
 const pool = require("../db/pool");
+const { validarFecha } = require("../utils/filtros");
 
 /**
  * Capa de Repositorios (ver Modelo C4 - Nivel 3).
@@ -238,14 +239,29 @@ async function registrarEntrada({
 /**
  * Historial de excedentes registrados (RF-09), el más reciente primero.
  */
-async function listarExcedentes() {
+async function listarExcedentes({ desde, hasta, q } = {}) {
+  const params = [];
+  let where = "WHERE m.tipo = 'excedente'";
+  if (validarFecha(desde, "desde")) {
+    params.push(desde);
+    where += ` AND m.fecha::date >= $${params.length}`;
+  }
+  if (validarFecha(hasta, "hasta")) {
+    params.push(hasta);
+    where += ` AND m.fecha::date <= $${params.length}`;
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where += ` AND (a.nombre ILIKE $${params.length} OR m.destino ILIKE $${params.length})`;
+  }
   const { rows } = await pool.query(
     `SELECT m.id, m.articulo_id, a.nombre AS articulo, a.unidad_medida,
             m.cantidad_total AS cantidad, m.destino, m.observaciones, m.fecha
      FROM movimientos m
      JOIN articulos a ON a.id = m.articulo_id
-     WHERE m.tipo = 'excedente'
+     ${where}
      ORDER BY m.fecha DESC, m.id DESC`,
+    params,
   );
   return rows;
 }

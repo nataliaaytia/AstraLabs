@@ -3,9 +3,27 @@ const loteRepository = require("../repositories/loteRepository");
 const { requiereRol } = require("../middleware/authMiddleware");
 const router = express.Router();
 
-router.get("/", async (_req, res) => {
+const ESTADOS_LOTE = ["vencido", "por_vencer", "vigente", "sin_asignar"];
+
+router.get("/", async (req, res) => {
+  const { articuloId, q, estado } = req.query;
+  if (
+    articuloId !== undefined &&
+    !(Number.isInteger(Number(articuloId)) && Number(articuloId) > 0)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "articuloId debe ser un entero positivo" });
+  }
+  if (estado !== undefined && !ESTADOS_LOTE.includes(estado)) {
+    return res
+      .status(400)
+      .json({ error: `estado debe ser uno de: ${ESTADOS_LOTE.join(", ")}` });
+  }
   try {
-    res.json(await loteRepository.listarLotes());
+    res.json(
+      await loteRepository.listarLotes({ articuloId, q: q?.trim(), estado }),
+    );
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
