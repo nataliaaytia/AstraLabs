@@ -1,5 +1,6 @@
 const express = require("express");
 const planComidaService = require("../services/planComidaService");
+const { requiereRol } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -14,32 +15,41 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
-  const { fecha, tipoComida, menuId, comensales, usuarioId } = req.body;
-  try {
-    const plan = await planComidaService.registrarPlan({
-      fecha,
-      tipoComida,
-      menuId,
-      comensales,
-      usuarioId,
-    });
-    res.status(201).json(plan);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+router.post(
+  "/",
+  requiereRol("Administradora", "Almacen_Cocina"),
+  async (req, res) => {
+    const { fecha, tipoComida, menuId, comensales } = req.body;
+    const usuarioId = req.usuario.id;
+    try {
+      const plan = await planComidaService.registrarPlan({
+        fecha,
+        tipoComida,
+        menuId,
+        comensales,
+        usuarioId,
+      });
+      res.status(201).json(plan);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+);
 
-router.post("/:id/confirmar", async (req, res) => {
-  try {
-    const plan = await planComidaService.confirmarPlan({
-      planId: req.params.id,
-      usuarioId: req.body.usuarioId,
-    });
-    res.json(plan);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+router.post(
+  "/:id/confirmar",
+  requiereRol("Administradora", "Almacen_Cocina"),
+  async (req, res) => {
+    try {
+      const plan = await planComidaService.confirmarPlan({
+        planId: req.params.id,
+        usuarioId: req.usuario.id,
+      });
+      res.json(plan);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+);
 
 module.exports = router;

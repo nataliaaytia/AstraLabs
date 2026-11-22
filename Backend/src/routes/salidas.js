@@ -1,5 +1,6 @@
 const express = require("express");
 const salidaService = require("../services/salidaService");
+const { requiereRol } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -10,20 +11,25 @@ const router = express.Router();
  * Body esperado:
  *   { articuloId: number, cantidad: number, usuarioId: number, destino: string }
  */
-router.post("/", async (req, res) => {
-  const { articuloId, cantidad, usuarioId, destino } = req.body;
+router.post(
+  "/",
+  requiereRol("Administradora", "Almacen_Cocina"),
+  async (req, res) => {
+    const { articuloId, cantidad, destino } = req.body;
+    const usuarioId = req.usuario.id;
 
-  try {
-    const resultado = await salidaService.registrarSalida({
-      articuloId,
-      cantidad,
-      usuarioId,
-      destino,
-    });
-    res.status(201).json(resultado);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+    try {
+      const resultado = await salidaService.registrarSalida({
+        articuloId,
+        cantidad,
+        usuarioId,
+        destino,
+      });
+      res.status(201).json(resultado);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+);
 
 module.exports = router;
