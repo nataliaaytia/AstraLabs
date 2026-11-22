@@ -1,0 +1,1357 @@
+{
+  "info": {
+    "name": "AstraLabs — API Inventario (Casa Amandita del Adulto Mayor)",
+    "description": "Colección para probar el backend de Inventario. Haz login (carpeta Auth) con el rol deseado: el token se guarda en {{token}} y se envía solo en cada request. Incluye filtros de listados, entradas, lotes, donantes, menús, planes de comida y reportes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "articulo_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "categoria_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "usuario_id",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "donante_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "menu_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "plan_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Administradora",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@amandita.test\",\n  \"password\": \"Admin123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Guarda el token en {{token}}. Los demás requests lo usan automáticamente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "if (d.token) { pm.collectionVariables.set('token', d.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Recepcion",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"recepcion@amandita.test\",\n  \"password\": \"Recepcion123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Guarda el token en {{token}}. Los demás requests lo usan automáticamente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "if (d.token) { pm.collectionVariables.set('token', d.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Almacen_Cocina",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"almacen@amandita.test\",\n  \"password\": \"Almacen123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Guarda el token en {{token}}. Los demás requests lo usan automáticamente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "if (d.token) { pm.collectionVariables.set('token', d.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Credenciales inválidas (debe dar 401)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@amandita.test\",\n  \"password\": \"incorrecta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ],
+      "description": "Haz login con el rol que quieras probar antes de usar las demás carpetas."
+    },
+    {
+      "name": "Usuarios y Roles",
+      "item": [
+        {
+          "name": "Listar usuarios (Administradora)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar usuarios por nombre o correo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/usuarios?q=demo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "demo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar usuarios por rol",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/usuarios?rol=Recepcion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "rol",
+                  "value": "Recepcion"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cambiar rol de un usuario (Administradora)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{usuario_id}}/rol",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuario_id}}",
+                "rol"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rol\": \"Recepcion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogo",
+      "item": [
+        {
+          "name": "Listar categorías",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar artículos (todos)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Artículos por categoría",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos?categoria_id={{categoria_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ],
+              "query": [
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar artículos por nombre",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos?q=arroz",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "arroz"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Artículos bajo el stock mínimo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos?bajo_minimo=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ],
+              "query": [
+                {
+                  "key": "bajo_minimo",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Combinar filtros",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos?categoria_id={{categoria_id}}&q=a&bajo_minimo=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ],
+              "query": [
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}"
+                },
+                {
+                  "key": "q",
+                  "value": "a"
+                },
+                {
+                  "key": "bajo_minimo",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear artículo",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/articulos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Lentejas\",\n  \"categoriaId\": 1,\n  \"unidadMedida\": \"kg\",\n  \"esPerecedero\": false,\n  \"stockMinimo\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Ver stock de un artículo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/articulos/{{articulo_id}}/stock",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articulos",
+                "{{articulo_id}}",
+                "stock"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entradas (donaciones)",
+      "item": [
+        {
+          "name": "Registrar entrada - mínima (Recepcion/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/entradas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "entradas"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"cantidad\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar entrada - completa",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/entradas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "entradas"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"cantidad\": 20,\n  \"donanteId\": \"{{donante_id}}\",\n  \"fecha\": \"2026-11-20\",\n  \"fechaVencimiento\": \"2027-06-30\",\n  \"numeroLote\": \"L-2026-11\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "El usuario que registra sale del token, no del body."
+    },
+    {
+      "name": "Lotes",
+      "item": [
+        {
+          "name": "Listar lotes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lotes de un artículo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?articuloId={{articulo_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "articuloId",
+                  "value": "{{articulo_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lotes vencidos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?estado=vencido",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "vencido"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lotes por vencer (30 días)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?estado=por_vencer",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "por_vencer"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lotes vigentes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?estado=vigente",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "vigente"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lotes sin asignar",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?estado=sin_asignar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "sin_asignar"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar lote por código",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lotes?q=L-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "L-2026"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Asignar lote (Recepcion/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/lotes/asignar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lotes",
+                "asignar"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"codigo\": \"L-ASIGNADO-1\",\n  \"cantidad\": 5,\n  \"fechaVencimiento\": \"2099-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Donantes",
+      "item": [
+        {
+          "name": "Listar donantes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/donantes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "donantes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar donantes por nombre o contacto",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/donantes?q=banco",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "donantes"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "banco"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar donantes por tipo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/donantes?tipo=empresa",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "donantes"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "empresa"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar donante (Recepcion/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/donantes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "donantes"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Panadería San José\",\n  \"tipo\": \"empresa\",\n  \"contacto\": \"María Pérez\",\n  \"telefono\": \"70000000\",\n  \"email\": \"contacto@sanjose.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movimientos de Inventario",
+      "item": [
+        {
+          "name": "Registrar salida (Almacen_Cocina/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/salidas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "salidas"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"cantidad\": 5,\n  \"destino\": \"Cocina - almuerzo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar merma",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/mermas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mermas"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"cantidad\": 2,\n  \"motivo\": \"vencimiento\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar excedente",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/excedentes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "excedentes"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"articuloId\": \"{{articulo_id}}\",\n  \"cantidad\": 3,\n  \"destino\": \"Donación - Casa Hermana\",\n  \"observaciones\": \"Sobrante de campaña\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar excedentes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/excedentes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "excedentes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excedentes por rango de fechas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/excedentes?desde=2026-11-01&hasta=2026-11-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "excedentes"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar excedentes por artículo o destino",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/excedentes?q=leche",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "excedentes"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "leche"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "En los tres POST el usuario sale del token."
+    },
+    {
+      "name": "Menús",
+      "item": [
+        {
+          "name": "Listar menús",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/menus",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menus"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar menús por nombre",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/menus?q=sopa",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menus"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "sopa"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ver un menú",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/menus/{{menu_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menus",
+                "{{menu_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear menú (Recepcion/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/menus",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menus"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sopa de verduras\",\n  \"descripcion\": \"Almuerzo\",\n  \"ingredientes\": [\n    {\n      \"articuloId\": \"{{articulo_id}}\",\n      \"cantidadPorPorcion\": 0.2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Planes de comida",
+      "item": [
+        {
+          "name": "Listar planes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Planes de una fecha",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida?fecha=2026-11-25",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-11-25"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Planes por rango de fechas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida?desde=2026-11-01&hasta=2026-11-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Planes por tipo de comida",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida?tipo_comida=almuerzo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ],
+              "query": [
+                {
+                  "key": "tipo_comida",
+                  "value": "almuerzo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Planes confirmados",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida?estado=confirmado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "confirmado"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear plan (Almacen_Cocina/Administradora)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"2026-11-25\",\n  \"tipoComida\": \"almuerzo\",\n  \"menuId\": \"{{menu_id}}\",\n  \"comensales\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Confirmar plan (descuenta stock por FEFO)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/planes-comida/{{plan_id}}/confirmar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "planes-comida",
+                "{{plan_id}}",
+                "confirmar"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Necesidades críticas (Administradora)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/reportes/necesidades-criticas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "necesidades-criticas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Necesidades críticas - límite",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/reportes/necesidades-criticas?limite=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "necesidades-criticas"
+              ],
+              "query": [
+                {
+                  "key": "limite",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
