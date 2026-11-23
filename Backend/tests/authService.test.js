@@ -1,11 +1,11 @@
-jest.mock("../repositories/usuarioRepository");
+jest.mock("../src/repositories/usuarioRepository");
 jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 
-const usuarioRepository = require("../repositories/usuarioRepository");
+const usuarioRepository = require("../src/repositories/usuarioRepository");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { login } = require("./authService");
+const { login } = require("../src/services/authService");
 
 describe("Servicio de Autenticación (RF-25)", () => {
   beforeEach(() => {

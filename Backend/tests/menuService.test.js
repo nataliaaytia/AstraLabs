@@ -1,7 +1,7 @@
-jest.mock("../repositories/menuRepository");
+jest.mock("../src/repositories/menuRepository");
 
-const menuRepository = require("../repositories/menuRepository");
-const menuService = require("./menuService");
+const menuRepository = require("../src/repositories/menuRepository");
+const menuService = require("../src/services/menuService");
 
 describe("Servicio de Menús (RF-16)", () => {
   beforeEach(() => jest.clearAllMocks());

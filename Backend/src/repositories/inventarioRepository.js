@@ -320,7 +320,7 @@ async function listarEntradas({ desde, hasta, q, donanteId, limite } = {}) {
  */
 async function insertarEntrada(
   client,
-  { articuloId, cantidad, usuarioId, donanteId, fecha, fechaVencimiento, numeroLote },
+  { articuloId, cantidad, usuarioId, donanteId, fecha, fechaVencimiento, numeroLote, observaciones },
 ) {
   const { rows: loteRows } = await client.query(
     `INSERT INTO lotes (articulo_id, numero_lote, fecha_vencimiento, donante_id, cantidad_inicial, fecha_ingreso)
@@ -331,10 +331,10 @@ async function insertarEntrada(
   const loteId = loteRows[0].id;
 
   const { rows: movRows } = await client.query(
-    `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, donante_id)
-     VALUES ('entrada', $1, $2, $3, $4)
+    `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, donante_id, observaciones)
+     VALUES ('entrada', $1, $2, $3, $4, $5)
      RETURNING id`,
-    [articuloId, cantidad, usuarioId, donanteId || null],
+    [articuloId, cantidad, usuarioId, donanteId || null, observaciones || null],
   );
   const movimientoId = movRows[0].id;
 
@@ -344,6 +344,17 @@ async function insertarEntrada(
   );
 
   return { movimientoId, loteId, articuloId, cantidadTotal: cantidad };
+}
+
+async function obtenerArticulosParaEntrada(ids) {
+  const { rows } = await pool.query(
+    `SELECT a.id, a.nombre, a.es_perecedero, c.nombre AS categoria
+       FROM articulos a
+       LEFT JOIN categorias c ON c.id = a.categoria_id
+      WHERE a.id = ANY($1::int[])`,
+    [ids],
+  );
+  return rows;
 }
 
 /**
@@ -378,4 +389,5 @@ module.exports = {
   registrarEntrada,
   registrarEntradasEnLote,
   listarEntradas,
+  obtenerArticulosParaEntrada,
 };

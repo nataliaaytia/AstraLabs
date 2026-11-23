@@ -1,7 +1,7 @@
-jest.mock("../repositories/donanteRepository");
+jest.mock("../src/repositories/donanteRepository");
 
-const donanteRepository = require("../repositories/donanteRepository");
-const donanteService = require("./donanteService");
+const donanteRepository = require("../src/repositories/donanteRepository");
+const donanteService = require("../src/services/donanteService");
 
 describe("Servicio de Donantes (RF-14)", () => {
   beforeEach(() => jest.clearAllMocks());

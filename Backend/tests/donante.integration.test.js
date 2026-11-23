@@ -1,5 +1,5 @@
-const pool = require("../db/pool");
-const donanteService = require("./donanteService");
+const pool = require("../src/db/pool");
+const donanteService = require("../src/services/donanteService");
 
 const NOMBRE_DONANTE_TEST = "Donante Test HU-14";
 const NOMBRE_EMPRESA_TEST = "Empresa Test HU-14";

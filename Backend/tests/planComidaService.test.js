@@ -1,7 +1,7 @@
-jest.mock("../repositories/planComidaRepository");
+jest.mock("../src/repositories/planComidaRepository");
 
-const planComidaRepository = require("../repositories/planComidaRepository");
-const planComidaService = require("./planComidaService");
+const planComidaRepository = require("../src/repositories/planComidaRepository");
+const planComidaService = require("../src/services/planComidaService");
 
 describe("Servicio de Plan de Comidas (RF-17)", () => {
   beforeEach(() => jest.clearAllMocks());

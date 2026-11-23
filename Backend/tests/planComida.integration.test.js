@@ -1,5 +1,5 @@
-const pool = require("../db/pool");
-const planComidaService = require("./planComidaService");
+const pool = require("../src/db/pool");
+const planComidaService = require("../src/services/planComidaService");
 
 const EMAIL_USUARIO_TEST = "test-hu17@astralabs.test";
 const NOMBRE_MENU_TEST = "Menu Test HU-17";

@@ -1,5 +1,5 @@
-const pool = require("../db/pool");
-const menuService = require("./menuService");
+const pool = require("../src/db/pool");
+const menuService = require("../src/services/menuService");
 
 const NOMBRE_ART_1 = "Articulo HU-16 Arroz";
 const NOMBRE_ART_2 = "Articulo HU-16 Aceite";

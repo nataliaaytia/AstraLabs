@@ -1,7 +1,7 @@
-jest.mock("../repositories/inventarioRepository");
+jest.mock("../src/repositories/inventarioRepository");
 
-const inventarioRepository = require("../repositories/inventarioRepository");
-const { registrarMerma } = require("./mermaService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
+const { registrarMerma } = require("../src/services/mermaService");
 
 describe("Servicio de Mermas (RF-06)", () => {
   beforeEach(() => {

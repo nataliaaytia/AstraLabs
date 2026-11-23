@@ -1,5 +1,5 @@
-const pool = require("../db/pool");
-const reporteService = require("./reporteService");
+const pool = require("../src/db/pool");
+const reporteService = require("../src/services/reporteService");
 
 const NOMBRE_ARTICULO_CRITICO = "Articulo Test HU-21 Critico";
 const NOMBRE_ARTICULO_OK = "Articulo Test HU-21 OK";

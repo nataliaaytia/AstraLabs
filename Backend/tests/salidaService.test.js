@@ -1,7 +1,7 @@
-jest.mock("../repositories/inventarioRepository");
+jest.mock("../src/repositories/inventarioRepository");
 
-const inventarioRepository = require("../repositories/inventarioRepository");
-const { registrarSalida } = require("./salidaService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
+const { registrarSalida } = require("../src/services/salidaService");
 
 describe("Servicio de Salidas (RF-03)", () => {
   beforeEach(() => {

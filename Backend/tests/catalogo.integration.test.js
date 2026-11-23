@@ -1,5 +1,5 @@
-const pool = require("../db/pool");
-const catalogoService = require("./catalogoService");
+const pool = require("../src/db/pool");
+const catalogoService = require("../src/services/catalogoService");
 
 describe("Catálogo — integración real (RF-01, RF-07)", () => {
   afterAll(async () => {

@@ -1,7 +1,7 @@
-jest.mock("../repositories/reporteRepository");
+jest.mock("../src/repositories/reporteRepository");
 
-const reporteRepository = require("../repositories/reporteRepository");
-const reporteService = require("./reporteService");
+const reporteRepository = require("../src/repositories/reporteRepository");
+const reporteService = require("../src/services/reporteService");
 
 describe("Servicio de Reportes (RF-21)", () => {
   beforeEach(() => jest.clearAllMocks());

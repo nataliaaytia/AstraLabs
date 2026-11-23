@@ -1,7 +1,7 @@
-jest.mock("../repositories/catalogoRepository");
+jest.mock("../src/repositories/catalogoRepository");
 
-const catalogoRepository = require("../repositories/catalogoRepository");
-const catalogoService = require("./catalogoService");
+const catalogoRepository = require("../src/repositories/catalogoRepository");
+const catalogoService = require("../src/services/catalogoService");
 
 describe("Servicio de Catálogo (RF-01, RF-07)", () => {
   beforeEach(() => jest.clearAllMocks());

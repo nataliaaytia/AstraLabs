@@ -1,6 +1,6 @@
-const pool = require("../db/pool");
-const entradaService = require("./entradaService");
-const inventarioRepository = require("../repositories/inventarioRepository");
+const pool = require("../src/db/pool");
+const entradaService = require("../src/services/entradaService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
 
 const NOMBRE_ARTICULO_TEST = "Articulo Test HU-02";
 const EMAIL_USUARIO_TEST = "test-hu02@astralabs.test";
