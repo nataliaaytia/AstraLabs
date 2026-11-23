@@ -266,6 +266,53 @@ async function listarExcedentes({ desde, hasta, q } = {}) {
   return rows;
 }
 
+/**
+ * Historial de entradas (donaciones), la más reciente primero (RF-02).
+ * "fecha" es la fecha de recepción que se ingresó al registrar (lotes.fecha_ingreso);
+ * "registrado_en" es el momento en que se guardó en el sistema.
+ */
+async function listarEntradas({ desde, hasta, q, donanteId, limite } = {}) {
+  const params = [];
+  let where = "WHERE m.tipo = 'entrada'";
+
+  if (validarFecha(desde, "desde")) {
+    params.push(desde);
+    where += ` AND l.fecha_ingreso >= $${params.length}`;
+  }
+  if (validarFecha(hasta, "hasta")) {
+    params.push(hasta);
+    where += ` AND l.fecha_ingreso <= $${params.length}`;
+  }
+  if (donanteId) {
+    params.push(Number(donanteId));
+    where += ` AND m.donante_id = $${params.length}`;
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where += ` AND (a.nombre ILIKE $${params.length} OR d.nombre ILIKE $${params.length})`;
+  }
+  params.push(limite);
+
+  const { rows } = await pool.query(
+    `SELECT m.id, m.articulo_id, a.nombre AS articulo, a.unidad_medida,
+            m.cantidad_total AS cantidad, m.donante_id, d.nombre AS donante,
+            l.numero_lote, l.fecha_vencimiento::text AS fecha_vencimiento,
+            l.fecha_ingreso::text AS fecha,
+            u.nombre AS registrado_por, m.fecha AS registrado_en
+     FROM movimientos m
+     JOIN articulos a ON a.id = m.articulo_id
+     JOIN usuarios u ON u.id = m.usuario_id
+     JOIN movimiento_lotes ml ON ml.movimiento_id = m.id
+     JOIN lotes l ON l.id = ml.lote_id
+     LEFT JOIN donantes d ON d.id = m.donante_id
+     ${where}
+     ORDER BY m.fecha DESC, m.id DESC
+     LIMIT $${params.length}`,
+    params,
+  );
+  return rows;
+}
+
 module.exports = {
   listarExcedentes,
   obtenerLotesConStock,
@@ -274,4 +321,5 @@ module.exports = {
   registrarMerma,
   registrarExcedente,
   registrarEntrada,
+  listarEntradas,
 };

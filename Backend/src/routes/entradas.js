@@ -34,4 +34,23 @@ router.post(
   },
 );
 
+router.get(
+  "/",
+  requiereRol("Administradora", "Recepcion"),
+  async (req, res) => {
+    try {
+      const entradas = await entradaService.listarEntradas({
+        desde: req.query.desde,
+        hasta: req.query.hasta,
+        q: req.query.q?.trim(),
+        donanteId: req.query.donante_id,
+        limite: req.query.limite,
+      });
+      res.json(entradas);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+);
+
 module.exports = router;

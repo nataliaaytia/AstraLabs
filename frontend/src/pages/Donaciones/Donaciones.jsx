@@ -34,11 +34,15 @@ function Donaciones({ navegar, usuarioActual }) {
     setCargando(true);
 
     try {
-      const lista = await inventarioApi.listarArticulos();
-      const listaDonantes = await inventarioApi.listarDonantes();
+      const [lista, listaDonantes, entradas] = await Promise.all([
+        inventarioApi.listarArticulos(),
+        inventarioApi.listarDonantes(),
+        inventarioApi.listarEntradas(6),
+      ]);
 
       setArticulos(lista);
       setDonantes(listaDonantes);
+      setDonaciones(entradas);
     } catch (error) {
       setMensaje({
         tipo: "error",
