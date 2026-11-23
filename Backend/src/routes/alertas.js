@@ -4,6 +4,24 @@ const { requiereRol } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+// Totales de todas las alertas (indicador del panel).
+router.get("/resumen", requiereRol("Administradora"), async (req, res) => {
+  try {
+    res.json(await alertaService.obtenerResumenAlertas());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// HU-11: artículos que llegaron a su stock mínimo o quedaron por debajo.
+router.get("/stock-minimo", requiereRol("Administradora"), async (req, res) => {
+  try {
+    res.json(await alertaService.obtenerAlertasStockMinimo());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // HU-10: lotes vencidos o próximos a vencer. ?dias=N reemplaza el umbral solo en esa consulta.
 router.get("/vencimiento", requiereRol("Administradora"), async (req, res) => {
   try {

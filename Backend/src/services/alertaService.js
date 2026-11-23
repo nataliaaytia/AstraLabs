@@ -76,7 +76,67 @@ async function obtenerAlertasVencimiento({ dias } = {}) {
   };
 }
 
+/**
+ * Alertas de stock mínimo (RF-11): artículos cuyo stock llegó al mínimo o
+ * quedó por debajo. estado: "agotado" (0), "bajo_minimo" (< mínimo),
+ * "en_minimo" (= mínimo). Los más críticos salen primero.
+ */
+async function obtenerAlertasStockMinimo() {
+  const filas = await alertaRepository.listarArticulosEnMinimo();
+  const articulos = filas.map((f) => {
+    const actual = Number(f.stock_actual);
+    const minimo = Number(f.stock_minimo);
+    let estado = "en_minimo";
+    if (actual === 0) estado = "agotado";
+    else if (actual < minimo) estado = "bajo_minimo";
+    return {
+      articulo_id: f.articulo_id,
+      articulo: f.articulo,
+      categoria: f.categoria,
+      unidad_medida: f.unidad_medida,
+      stock_actual: actual,
+      stock_minimo: minimo,
+      faltante: Math.max(minimo - actual, 0),
+      porcentaje_cubierto: Math.round((actual / minimo) * 100),
+      estado,
+    };
+  });
+  const cuenta = (e) => articulos.filter((a) => a.estado === e).length;
+  return {
+    total: articulos.length,
+    agotados: cuenta("agotado"),
+    bajo_minimo: cuenta("bajo_minimo"),
+    en_minimo: cuenta("en_minimo"),
+    articulos,
+  };
+}
+
+/** Totales de ambas alertas, para el indicador del panel con una sola llamada. */
+async function obtenerResumenAlertas() {
+  const [venc, stock] = await Promise.all([
+    obtenerAlertasVencimiento(),
+    obtenerAlertasStockMinimo(),
+  ]);
+  return {
+    total: venc.total + stock.total,
+    vencimiento: {
+      dias_anticipacion: venc.dias_anticipacion,
+      total: venc.total,
+      vencidos: venc.vencidos,
+      por_vencer: venc.por_vencer,
+    },
+    stock_minimo: {
+      total: stock.total,
+      agotados: stock.agotados,
+      bajo_minimo: stock.bajo_minimo,
+      en_minimo: stock.en_minimo,
+    },
+  };
+}
+
 module.exports = {
+  obtenerAlertasStockMinimo,
+  obtenerResumenAlertas,
   obtenerAlertasVencimiento,
   obtenerUmbralVencimiento,
   configurarUmbralVencimiento,

@@ -47,8 +47,29 @@ async function listarLotesPorVencer(dias) {
   return rows;
 }
 
+/**
+ * Artículos activos con stock mínimo definido (> 0) cuyo stock actual es
+ * menor o igual a ese mínimo (RF-11).
+ */
+async function listarArticulosEnMinimo() {
+  const { rows } = await pool.query(
+    `SELECT a.id AS articulo_id, a.nombre AS articulo, c.nombre AS categoria,
+            a.unidad_medida, a.stock_minimo,
+            COALESCE(SUM(l.cantidad_disponible), 0) AS stock_actual
+       FROM articulos a
+       JOIN categorias c ON c.id = a.categoria_id
+       LEFT JOIN lotes l ON l.articulo_id = a.id
+      WHERE a.activo = TRUE AND a.stock_minimo > 0
+      GROUP BY a.id, a.nombre, c.nombre, a.unidad_medida, a.stock_minimo
+     HAVING COALESCE(SUM(l.cantidad_disponible), 0) <= a.stock_minimo
+      ORDER BY (COALESCE(SUM(l.cantidad_disponible), 0) / a.stock_minimo), a.nombre`,
+  );
+  return rows;
+}
+
 module.exports = {
   obtenerUmbralVencimiento,
   guardarUmbralVencimiento,
   listarLotesPorVencer,
+  listarArticulosEnMinimo,
 };
