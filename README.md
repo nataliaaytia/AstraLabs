@@ -17,9 +17,10 @@ Para probarla sin escribir código, importa `AstraLabs.postman_collection.json`
 3. [Errores comunes](#errores-comunes)
 4. [Filtros de los listados](#filtros-de-los-listados)
 5. [Endpoints](#endpoints)
-6. [Registro de uso de filtros](#registro-de-uso-de-filtros)
-7. [Usuarios de prueba](#usuarios-de-prueba)
-8. [Pendiente de conectar en el frontend](#pendiente-de-conectar-en-el-frontend)
+6. [Exportaciones a Excel y PDF](#exportaciones-a-excel-y-pdf)
+7. [Registro de uso de filtros](#registro-de-uso-de-filtros)
+8. [Usuarios de prueba](#usuarios-de-prueba)
+9. [Pendiente de conectar en el frontend](#pendiente-de-conectar-en-el-frontend)
 
 ---
 
@@ -71,6 +72,9 @@ si se manda, se ignora.
 | `GET /api/planes-comida`                                                    | Cualquier usuario autenticado  |
 | `POST /api/planes-comida`, `POST /api/planes-comida/:id/confirmar`          | Administradora, Almacen_Cocina |
 | `GET /api/reportes/necesidades-criticas`                                    | Administradora                 |
+| `GET /api/articulos/exportar`                                               | Cualquier usuario autenticado  |
+| `GET /api/menus/exportar`, `GET /api/planes-comida/exportar`                | Administradora, Almacen_Cocina |
+| `GET /api/reportes/necesidades-criticas/exportar`                           | Administradora                 |
 
 ---
 
@@ -481,8 +485,75 @@ Rol: Administradora, Almacen_Cocina.
 
 ### `GET /api/reportes/necesidades-criticas`
 
-Artículos en necesidad crítica (stock por debajo del mínimo). Parámetro
-opcional `limite` (cantidad máxima de resultados). Rol: Administradora.
+RF-21. Artículos con stock por debajo de su mínimo, el mayor faltante primero.
+Parámetro opcional `limite` (entero positivo; si no lo es, responde 400).
+Rol: Administradora.
+
+```json
+[
+  {
+    "articulo_id": 1,
+    "articulo": "Arroz",
+    "stock_actual": 5,
+    "stock_minimo": 20,
+    "deficit": 15,
+    "porcentaje_cubierto": 25
+  }
+]
+```
+
+`porcentaje_cubierto` es cuánto del mínimo cubre el stock actual (0 = sin nada,
+100 = justo en el mínimo).
+
+---
+
+## Exportaciones a Excel y PDF
+
+RF-24 / HU-24. Cada pantalla se puede descargar como archivo. El parámetro
+`formato` es **obligatorio** (`xlsx` o `pdf`) y cada exportación acepta los
+**mismos filtros que el listado de su pantalla**: el archivo trae lo mismo que
+se ve en pantalla.
+
+| Endpoint                                          | Rol                            | Filtros                                                   | Contenido                                                                                              |
+| ------------------------------------------------- | ------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /api/articulos/exportar`                     | Cualquier usuario autenticado  | `q`, `categoria_id`, `bajo_minimo`                        | Artículo, categoría, unidad, perecedero, stock actual, stock mínimo y estado (Normal / Bajo el mínimo) |
+| `GET /api/menus/exportar`                         | Administradora, Almacen_Cocina | `q`                                                       | Una fila por ingrediente: menú, descripción, ingrediente, cantidad por porción y unidad                |
+| `GET /api/planes-comida/exportar`                 | Administradora, Almacen_Cocina | `mes`, `fecha`, `desde`, `hasta`, `tipo_comida`, `estado` | Fecha, comida, menú, comensales y estado, en orden cronológico (desayuno, almuerzo, merienda)          |
+| `GET /api/reportes/necesidades-criticas/exportar` | Administradora                 | `limite`                                                  | Artículo, stock actual, stock mínimo, faltante y % cubierto                                            |
+
+**Atajo `mes`** (solo en planes de comida): `?mes=2026-11` equivale a
+`desde=2026-11-01&hasta=2026-11-30`. No se puede combinar con `fecha`, `desde`
+ni `hasta` (responde 400).
+
+**Cada archivo incluye** el título, la fecha y hora de generación (hora de La Paz),
+los filtros aplicados y el total de registros. El Excel tiene encabezado fijo y
+filtros de columna; el PDF repite el encabezado en cada hoja y numera las páginas.
+Si los filtros no devuelven nada, el archivo se genera igual con el aviso
+"Sin registros para los filtros aplicados".
+
+**Respuesta 200**: el archivo, con
+
+- `Content-Type`: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` o `application/pdf`
+- `Content-Disposition: attachment; filename="articulos_2026-11-22.xlsx"` (el nombre
+  lleva la fecha de generación; el header está expuesto a CORS para que el frontend pueda leerlo)
+
+**Errores** (siempre en JSON, no en archivo): 400 si falta `formato` o no es
+`xlsx`/`pdf`, si un filtro es inválido (`mes`, fechas, `categoria_id`, `limite`);
+401 sin token; 403 si el rol no tiene permiso.
+
+Ejemplos:
+
+```
+GET /api/articulos/exportar?formato=pdf&bajo_minimo=true
+GET /api/menus/exportar?formato=xlsx&q=sopa
+GET /api/planes-comida/exportar?formato=pdf&mes=2026-11
+GET /api/reportes/necesidades-criticas/exportar?formato=xlsx&limite=10
+```
+
+> Como exigen el header `Authorization`, **no se pueden abrir con un enlace
+> `<a href>`**: el frontend debe pedir el archivo con `fetch`, convertir la
+> respuesta en `blob` y descargarlo (ver ejemplo en
+> [Pendiente de conectar en el frontend](#pendiente-de-conectar-en-el-frontend)).
 
 ---
 
@@ -532,3 +603,25 @@ Ver `Backend/src/scripts/seed.js`.
 - Configurar la URL de la API (`VITE_API_URL`) en vez de `localhost:3000` fijo.
 - Incluir en cada pantalla los filtros de [Filtros de los listados](#filtros-de-los-listados),
   adaptados al usuario mayor (letra grande, pasos simples).
+- Agregar un botón de exportar (Excel / PDF) en artículos, menús, plan de comidas
+  y reporte de necesidades críticas, enviando los mismos filtros que la pantalla.
+  Ejemplo de descarga con token:
+
+  ```js
+  async function descargar(url, token) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    const nombre =
+      /filename="(.+)"/.exec(res.headers.get("Content-Disposition"))?.[1] ??
+      "exportacion";
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(await res.blob());
+    enlace.download = nombre;
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+  }
+
+  descargar(`${API}/api/articulos/exportar?formato=pdf&q=arroz`, token);
+  ```

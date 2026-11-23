@@ -13,6 +13,7 @@ const reportesRouter = require("./routes/reportes");
 const menusRouter = require("./routes/menus");
 const planesComidaRouter = require("./routes/planesComida");
 const lotesRouter = require("./routes/lotes");
+const exportacionesRouter = require("./routes/exportaciones");
 
 //Seguridad
 const { autenticar, requiereRol } = require("./middleware/authMiddleware");
@@ -26,6 +27,9 @@ app.use(registrarFiltros);
 app.get("/health", (req, res) => {
   res.json({ status: "ok", servicio: "API Inventario - AstraLabs" });
 });
+
+//exportaciones
+app.use(exportacionesRouter);
 
 // Pública: solo el login
 app.use("/api/auth", authRouter);

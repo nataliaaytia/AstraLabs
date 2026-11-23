@@ -2,6 +2,8 @@ const pool = require("../db/pool");
 const salidaService = require("./salidaService");
 const inventarioRepository = require("../repositories/inventarioRepository");
 
+jest.setTimeout(30000);
+
 const NOMBRE_ARTICULO_TEST = "Articulo Test HU-20";
 const EMAIL_USUARIO_TEST = "test-hu20@astralabs.test";
 

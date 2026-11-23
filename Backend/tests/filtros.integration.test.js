@@ -10,15 +10,40 @@ const planComidaService = require("../src/services/planComidaService");
 jest.setTimeout(30000);
 
 const SUF = Date.now();
+// Año distinto en cada corrida: (fecha, tipo_comida) es UNIQUE en planes_comida
+// y así nunca choca con datos que haya dejado una corrida interrumpida.
+const ANIO = 3000 + (SUF % 6000);
+const f = (mmdd) => `${ANIO}-${mmdd}`;
 const ids = {};
-const nombres = (rows) => rows.map((r) => r.nombre).sort();
 
 async function q(sql, params) {
   return (await pool.query(sql, params)).rows;
 }
 
+/** Borra TODO lo que esta prueba crea (prefijo ZZF), de esta corrida o de anteriores. */
+async function limpiarResiduos() {
+  await q(
+    `DELETE FROM planes_comida WHERE menu_id IN (SELECT id FROM menus WHERE nombre LIKE 'ZZF-%')`,
+  );
+  await q(`DELETE FROM movimiento_lotes WHERE lote_id IN (
+             SELECT l.id FROM lotes l JOIN articulos a ON a.id = l.articulo_id WHERE a.nombre LIKE 'ZZF-%')`);
+  await q(
+    `DELETE FROM movimientos WHERE articulo_id IN (SELECT id FROM articulos WHERE nombre LIKE 'ZZF-%')`,
+  );
+  await q(
+    `DELETE FROM lotes WHERE articulo_id IN (SELECT id FROM articulos WHERE nombre LIKE 'ZZF-%')`,
+  );
+  await q(`DELETE FROM menus WHERE nombre LIKE 'ZZF-%'`);
+  await q(`DELETE FROM donantes WHERE nombre LIKE 'ZZF %'`);
+  await q(`DELETE FROM articulos WHERE nombre LIKE 'ZZF-%'`);
+  await q(`DELETE FROM categorias WHERE nombre LIKE 'ZZF-%'`);
+  await q(`DELETE FROM usuarios WHERE email LIKE 'zzf-%@test.local'`);
+}
+
 describe("Filtros de listados (integración, Neon)", () => {
   beforeAll(async () => {
+    await limpiarResiduos();
+
     const rolId = async (n) =>
       (await q("SELECT id FROM roles WHERE nombre = $1", [n]))[0].id;
     const crearUsuario = async (nombre, rol, i) =>
@@ -95,9 +120,9 @@ describe("Filtros de listados (integración, Neon)", () => {
         comensales: 3,
         usuarioId: ids.u1,
       });
-    await plan("2099-03-10", "almuerzo");
-    const p2 = await plan("2099-03-11", "desayuno");
-    await plan("2099-04-01", "almuerzo");
+    await plan(f("03-10"), "almuerzo");
+    const p2 = await plan(f("03-11"), "desayuno");
+    await plan(f("04-01"), "almuerzo");
     await q(`UPDATE planes_comida SET estado = 'confirmado' WHERE id = $1`, [
       p2.id,
     ]);
@@ -108,23 +133,12 @@ describe("Filtros de listados (integración, Neon)", () => {
          VALUES ('excedente', $1, 1, $2, $3, $4)`,
         [ids.a1, ids.u1, destino, fecha],
       );
-    await exc("2099-02-01T12:00:00Z", "ZZF-Asilo");
-    await exc("2099-02-20T12:00:00Z", "ZZF-Iglesia");
+    await exc(`${f("02-01")}T12:00:00Z`, "ZZF-Asilo");
+    await exc(`${f("02-20")}T12:00:00Z`, "ZZF-Iglesia");
   });
 
   afterAll(async () => {
-    await q(`DELETE FROM planes_comida WHERE menu_id = $1`, [ids.m1]);
-    await q(`DELETE FROM movimientos WHERE articulo_id = ANY($1)`, [
-      [ids.a1, ids.a2],
-    ]);
-    await q(`DELETE FROM lotes WHERE articulo_id = ANY($1)`, [
-      [ids.a1, ids.a2],
-    ]);
-    await q(`DELETE FROM menus WHERE nombre LIKE 'ZZF-%'`);
-    await q(`DELETE FROM donantes WHERE nombre LIKE 'ZZF %'`);
-    await q(`DELETE FROM articulos WHERE id = ANY($1)`, [[ids.a1, ids.a2]]);
-    await q(`DELETE FROM categorias WHERE id = ANY($1)`, [[ids.c1, ids.c2]]);
-    await q(`DELETE FROM usuarios WHERE id = ANY($1)`, [[ids.u1, ids.u2]]);
+    await limpiarResiduos();
     await pool.end();
   });
 
@@ -227,31 +241,31 @@ describe("Filtros de listados (integración, Neon)", () => {
   });
 
   describe("planes de comida", () => {
-    const rango = { desde: "2099-03-01", hasta: "2099-04-30" };
+    const rango = () => ({ desde: f("03-01"), hasta: f("04-30") });
     test("rango desde/hasta", async () => {
       const r = await planComidaService.listarPlanes({
-        desde: "2099-03-01",
-        hasta: "2099-03-31",
+        desde: f("03-01"),
+        hasta: f("03-31"),
       });
-      expect(r.map((p) => p.fecha)).toEqual(["2099-03-10", "2099-03-11"]);
+      expect(r.map((p) => p.fecha)).toEqual([f("03-10"), f("03-11")]);
     });
     test("fecha exacta", async () => {
-      const r = await planComidaService.listarPlanes({ fecha: "2099-03-10" });
+      const r = await planComidaService.listarPlanes({ fecha: f("03-10") });
       expect(r).toHaveLength(1);
     });
     test("tipoComida", async () => {
       const r = await planComidaService.listarPlanes({
-        ...rango,
+        ...rango(),
         tipoComida: "almuerzo",
       });
       expect(r).toHaveLength(2);
     });
     test("estado confirmado", async () => {
       const r = await planComidaService.listarPlanes({
-        ...rango,
+        ...rango(),
         estado: "confirmado",
       });
-      expect(r.map((p) => p.fecha)).toEqual(["2099-03-11"]);
+      expect(r.map((p) => p.fecha)).toEqual([f("03-11")]);
     });
     test("fecha inválida lanza error", async () => {
       await expect(
@@ -264,12 +278,12 @@ describe("Filtros de listados (integración, Neon)", () => {
     test("desde y hasta", async () => {
       const a = await inventarioRepository.listarExcedentes({
         q: "ZZF",
-        desde: "2099-02-10",
+        desde: f("02-10"),
       });
       expect(a.map((e) => e.destino)).toEqual(["ZZF-Iglesia"]);
       const b = await inventarioRepository.listarExcedentes({
         q: "ZZF",
-        hasta: "2099-02-10",
+        hasta: f("02-10"),
       });
       expect(b.map((e) => e.destino)).toEqual(["ZZF-Asilo"]);
     });
