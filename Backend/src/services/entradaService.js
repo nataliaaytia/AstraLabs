@@ -68,4 +68,48 @@ async function listarEntradas({ desde, hasta, q, donanteId, limite } = {}) {
   return entradas.map((e) => ({ ...e, cantidad: Number(e.cantidad) }));
 }
 
-module.exports = { registrarEntrada, listarEntradas };
+const MAXIMO_ITEMS = 50;
+
+async function registrarEntradasEnLote({ usuarioId, donanteId, fecha, items }) {
+  if (!usuarioId) {
+    throw new Error("usuarioId es obligatorio");
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("items debe incluir al menos un artículo");
+  }
+  if (items.length > MAXIMO_ITEMS) {
+    throw new Error(`items admite como máximo ${MAXIMO_ITEMS} artículos por donación`);
+  }
+
+  const itemsLimpios = items.map((item, indice) => {
+    const n = indice + 1;
+    if (!item || !item.articuloId) {
+      throw new Error(`ítem #${n}: articuloId es obligatorio`);
+    }
+    if (!Number.isFinite(Number(item.cantidad)) || Number(item.cantidad) <= 0) {
+      throw new Error(`ítem #${n}: la cantidad debe ser mayor a cero`);
+    }
+    return {
+      articuloId: item.articuloId,
+      cantidad: Number(item.cantidad),
+      fechaVencimiento: item.fechaVencimiento || null,
+      numeroLote: item.numeroLote || null,
+    };
+  });
+
+  try {
+    const entradas = await inventarioRepository.registrarEntradasEnLote({
+      usuarioId,
+      donanteId: donanteId || null,
+      fecha: fecha || null,
+      items: itemsLimpios,
+    });
+    return { donanteId: donanteId || null, fecha: fecha || null, total: entradas.length, entradas };
+  } catch (err) {
+    if (err.code === "23503") throw new Error("Uno de los artículos o el donante no existe");
+    if (err.code === "23505") throw new Error("Ya existe un lote con ese número para el artículo");
+    throw err;
+  }
+}
+
+module.exports = { registrarEntrada, listarEntradas, registrarEntradasEnLote };

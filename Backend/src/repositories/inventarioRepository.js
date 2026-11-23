@@ -313,6 +313,61 @@ async function listarEntradas({ desde, hasta, q, donanteId, limite } = {}) {
   return rows;
 }
 
+/**
+ * Inserta UNA entrada (lote + movimiento + detalle) con el cliente de una
+ * transacción ya abierta. El trigger de schema.sql suma el stock al insertar
+ * en movimiento_lotes.
+ */
+async function insertarEntrada(
+  client,
+  { articuloId, cantidad, usuarioId, donanteId, fecha, fechaVencimiento, numeroLote },
+) {
+  const { rows: loteRows } = await client.query(
+    `INSERT INTO lotes (articulo_id, numero_lote, fecha_vencimiento, donante_id, cantidad_inicial, fecha_ingreso)
+     VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
+     RETURNING id`,
+    [articuloId, numeroLote || null, fechaVencimiento || null, donanteId || null, cantidad, fecha || null],
+  );
+  const loteId = loteRows[0].id;
+
+  const { rows: movRows } = await client.query(
+    `INSERT INTO movimientos (tipo, articulo_id, cantidad_total, usuario_id, donante_id)
+     VALUES ('entrada', $1, $2, $3, $4)
+     RETURNING id`,
+    [articuloId, cantidad, usuarioId, donanteId || null],
+  );
+  const movimientoId = movRows[0].id;
+
+  await client.query(
+    `INSERT INTO movimiento_lotes (movimiento_id, lote_id, cantidad) VALUES ($1, $2, $3)`,
+    [movimientoId, loteId, cantidad],
+  );
+
+  return { movimientoId, loteId, articuloId, cantidadTotal: cantidad };
+}
+
+/**
+ * Registra una donación con VARIOS artículos en una sola transacción:
+ * o se guardan todos o no se guarda ninguno (RF-02).
+ */
+async function registrarEntradasEnLote({ usuarioId, donanteId, fecha, items }) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const entradas = [];
+    for (const item of items) {
+      entradas.push(await insertarEntrada(client, { ...item, usuarioId, donanteId, fecha }));
+    }
+    await client.query("COMMIT");
+    return entradas;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   listarExcedentes,
   obtenerLotesConStock,
@@ -321,5 +376,6 @@ module.exports = {
   registrarMerma,
   registrarExcedente,
   registrarEntrada,
+  registrarEntradasEnLote,
   listarEntradas,
 };

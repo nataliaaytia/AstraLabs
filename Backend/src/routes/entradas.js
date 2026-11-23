@@ -34,6 +34,26 @@ router.post(
   },
 );
 
+// Donación por lotes: varios artículos en una sola operación (todo o nada).
+router.post(
+  "/multiple",
+  requiereRol("Administradora", "Recepcion"),
+  async (req, res) => {
+    const { donanteId, fecha, items } = req.body;
+    try {
+      const resultado = await entradaService.registrarEntradasEnLote({
+        usuarioId: req.usuario.id,
+        donanteId,
+        fecha,
+        items,
+      });
+      res.status(201).json(resultado);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  },
+);
+
 router.get(
   "/",
   requiereRol("Administradora", "Recepcion"),
