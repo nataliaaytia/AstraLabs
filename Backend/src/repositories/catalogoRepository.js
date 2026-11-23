@@ -59,4 +59,21 @@ async function crearArticulo({
   return rows[0];
 }
 
-module.exports = { listarCategorias, listarArticulos, crearArticulo };
+async function actualizarArticulo(id, campos) {
+  const columnas = Object.keys(campos);
+  const sets = columnas.map((c, i) => `${c} = $${i + 2}`).join(", ");
+  const { rows } = await pool.query(
+    `UPDATE articulos SET ${sets}
+      WHERE id = $1 AND activo = TRUE
+      RETURNING id, nombre, categoria_id, unidad_medida, es_perecedero, stock_minimo, created_at`,
+    [id, ...columnas.map((c) => campos[c])],
+  );
+  return rows[0];
+}
+
+module.exports = {
+  listarCategorias,
+  listarArticulos,
+  crearArticulo,
+  actualizarArticulo,
+};
