@@ -146,4 +146,43 @@ async function confirmarPlanConDescuento({ planId, usuarioId }) {
   }
 }
 
-module.exports = { crearPlan, listarPlanes, confirmarPlanConDescuento };
+async function obtenerPlan(planId) {
+  const { rows } = await pool.query(
+    `SELECT p.id, p.fecha::text AS fecha, p.tipo_comida, p.comensales, p.estado,
+            m.id AS menu_id, m.nombre AS menu
+       FROM planes_comida p
+       JOIN menus m ON m.id = p.menu_id
+      WHERE p.id = $1`,
+    [planId],
+  );
+  return rows[0] || null;
+}
+
+async function calcularIngredientesPlan(planId) {
+  const { rows } = await pool.query(
+    `SELECT a.id AS articulo_id, a.nombre AS articulo, c.nombre AS categoria, a.unidad_medida,
+            mi.cantidad_por_porcion,
+            (mi.cantidad_por_porcion * p.comensales) AS requerida,
+            COALESCE((SELECT SUM(l.cantidad_disponible) FROM lotes l WHERE l.articulo_id = a.id), 0) AS disponible,
+            GREATEST(
+              (mi.cantidad_por_porcion * p.comensales)
+              - COALESCE((SELECT SUM(l.cantidad_disponible) FROM lotes l WHERE l.articulo_id = a.id), 0),
+              0) AS faltante
+       FROM planes_comida p
+       JOIN menu_ingredientes mi ON mi.menu_id = p.menu_id
+       JOIN articulos a ON a.id = mi.articulo_id
+       JOIN categorias c ON c.id = a.categoria_id
+      WHERE p.id = $1
+      ORDER BY a.nombre`,
+    [planId],
+  );
+  return rows;
+}
+
+module.exports = {
+  crearPlan,
+  listarPlanes,
+  confirmarPlanConDescuento,
+  obtenerPlan,
+  calcularIngredientesPlan,
+};

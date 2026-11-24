@@ -40,6 +40,19 @@ router.post(
   },
 );
 
+router.get(
+  "/:id/faltantes",
+  requiereRol("Administradora", "Almacen_Cocina"),
+  async (req, res) => {
+    try {
+      res.json(await planComidaService.obtenerFaltantesPlan(req.params.id));
+    } catch (err) {
+      const estado = err.message === "El plan de comidas no existe" ? 404 : 400;
+      res.status(estado).json({ error: err.message });
+    }
+  },
+);
+
 router.post(
   "/:id/confirmar",
   requiereRol("Administradora", "Almacen_Cocina"),
