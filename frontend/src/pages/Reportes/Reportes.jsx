@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
-import { TIPOS_REPORTE, construirReporte } from "../../data/reportes";
+import {
+    TIPOS_REPORTE,
+    construirReporte,
+    exportarExcel,
+    exportarPDF,
+} from "../../data/reportes";
 import "../InventarioComun.css";
 import "./Reportes.css";
 
@@ -10,6 +15,7 @@ function Reportes({ navegar }) {
     const [filtros, setFiltros] = useState({ desde: "", hasta: "" });
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
+    const [mensaje, setMensaje] = useState(null);
 
     useEffect(() => {
         let activo = true;
@@ -43,6 +49,26 @@ function Reportes({ navegar }) {
     } catch (err) {
         errorReporte = err.message;
     }
+
+    const exportar = (formato) => {
+        try {
+            if (formato === "pdf") {
+                exportarPDF(reporte);
+                setMensaje({
+                    tipo: "exito",
+                    texto: "Elige \"Guardar como PDF\" en la ventana de impresión.",
+                });
+            } else {
+                exportarExcel(reporte);
+                setMensaje({
+                    tipo: "exito",
+                    texto: "El archivo de Excel se descargó correctamente.",
+                });
+            }
+        } catch (err) {
+            setMensaje({ tipo: "error", texto: err.message });
+        }
+    };
 
     const cambiarFiltro = (evento) => {
         setFiltros((anterior) => ({
@@ -88,7 +114,10 @@ function Reportes({ navegar }) {
                             type="button"
                             key={opcion.valor}
                             className={`reportes-tipo ${tipo === opcion.valor ? "activo" : ""}`}
-                            onClick={() => setTipo(opcion.valor)}
+                            onClick={() => {
+                                setTipo(opcion.valor);
+                                setMensaje(null);
+                            }}
                             aria-pressed={tipo === opcion.valor}
                         >
                             <strong>{opcion.titulo}</strong>
@@ -107,7 +136,38 @@ function Reportes({ navegar }) {
                                     : ""}
                             </p>
                         </div>
+
+                        <div className="reportes-exportar">
+                            <button
+                                type="button"
+                                className="reportes-boton-pdf"
+                                onClick={() => exportar("pdf")}
+                                disabled={cargando || !reporte || reporte.filas.length === 0}
+                            >
+                                ↓ PDF
+                            </button>
+
+                            <button
+                                type="button"
+                                className="inv-boton"
+                                onClick={() => exportar("excel")}
+                                disabled={cargando || !reporte || reporte.filas.length === 0}
+                            >
+                                ↓ Excel
+                            </button>
+                        </div>
                     </div>
+
+                    {mensaje && (
+                        <div
+                            className={`inv-mensaje ${mensaje.tipo}`}
+                            role="status"
+                        >
+                            {mensaje.tipo === "exito" ? "✓" : "✕"}
+                            {" "}
+                            {mensaje.texto}
+                        </div>
+                    )}
 
                     {info.usaFechas && (
                         <div className="reportes-fechas">

@@ -109,3 +109,37 @@
         grid-template-columns: 1fr;
     }
 }
+
+.reportes-exportar {
+    display: flex;
+    gap: 10px;
+}
+
+.reportes-boton-pdf {
+    padding: 14px 23px;
+    border: 1px solid #E9B0A5;
+    border-radius: 100px;
+    background: #FFF0EC;
+    color: #A34D41;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.reportes-boton-pdf:hover {
+    background: var(--durazno);
+}
+
+.reportes-boton-pdf:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 550px) {
+    .reportes-exportar {
+        width: 100%;
+    }
+
+    .reportes-exportar button {
+        flex: 1;
+    }
+}

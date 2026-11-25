@@ -211,3 +211,138 @@ export function construirReporte(tipo, datos, filtros = {}) {
         ...constructores[tipo](),
     };
 }
+
+function escapar(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function nombreArchivo(reporte, extension) {
+    const base = reporte.titulo
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-");
+
+    return `casa-amandita-${base}-${new Date().toLocaleDateString("en-CA")}.${extension}`;
+}
+
+function tablaHTML(reporte) {
+    return `
+        <table>
+            <thead>
+                <tr>${reporte.columnas.map((c) => `<th>${escapar(c)}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+                ${reporte.filas.map((fila) =>
+        `<tr>${fila.map((celda) => `<td>${escapar(celda)}</td>`).join("")}</tr>`
+    ).join("")}
+            </tbody>
+        </table>`;
+}
+
+function validarExportable(reporte) {
+    if (!reporte || reporte.filas.length === 0) {
+        throw new Error("No hay registros para exportar.");
+    }
+}
+
+export function exportarExcel(reporte) {
+    validarExportable(reporte);
+
+    const contenido = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head>
+            <meta charset="UTF-8" />
+            <style>
+                th { background: #737D61; color: #FFFFFF; font-weight: bold; }
+                td, th { border: 1px solid #EFE3D3; padding: 6px; }
+            </style>
+        </head>
+        <body>
+            <h2>Casa Amandita · ${escapar(reporte.titulo)}</h2>
+            <p>Generado: ${escapar(reporte.generado)}${reporte.periodo ? ` · Periodo: ${escapar(reporte.periodo)}` : ""}</p>
+            ${tablaHTML(reporte)}
+        </body>
+        </html>`;
+
+    const blob = new Blob(["﻿", contenido], {
+        type: "application/vnd.ms-excel;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+
+    enlace.href = url;
+    enlace.download = nombreArchivo(reporte, "xls");
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function exportarPDF(reporte) {
+    validarExportable(reporte);
+
+    const marco = document.createElement("iframe");
+
+    marco.style.position = "fixed";
+    marco.style.width = "0";
+    marco.style.height = "0";
+    marco.style.border = "0";
+    marco.setAttribute("aria-hidden", "true");
+    document.body.appendChild(marco);
+
+    const documento = marco.contentWindow.document;
+
+    documento.open();
+    documento.write(`
+        <!doctype html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8" />
+            <title>${escapar(nombreArchivo(reporte, "pdf"))}</title>
+            <style>
+                @page { margin: 18mm 14mm; }
+                body { font-family: "DM Sans", Arial, sans-serif; color: #51483E; }
+                .marca { font-size: 10px; letter-spacing: 2px; color: #737D61; font-weight: bold; }
+                h1 { font-family: Georgia, serif; font-weight: 400; font-size: 26px; margin: 8px 0 4px; }
+                p { font-size: 11px; color: #7B766D; margin: 0 0 16px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                th { background: #737D61; color: white; text-align: left; padding: 8px; }
+                td { padding: 7px 8px; border-bottom: 1px solid #EFE3D3; }
+                tr:nth-child(even) td { background: #FCF8F3; }
+                .pie { margin-top: 18px; font-size: 10px; color: #A5AA94; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <span class="marca">✦ CASA AMANDITA · DEL ADULTO MAYOR</span>
+            <h1>${escapar(reporte.titulo)}</h1>
+            <p>
+                Generado: ${escapar(reporte.generado)}
+                ${reporte.periodo ? ` · Periodo: ${escapar(reporte.periodo)}` : ""}
+                · ${reporte.filas.length} registro(s)
+            </p>
+            ${tablaHTML(reporte)}
+            <div class="pie">Organizando recursos, cuidando personas ♡</div>
+        </body>
+        </html>`);
+    documento.close();
+
+    const imprimir = () => {
+        marco.contentWindow.focus();
+        marco.contentWindow.print();
+        setTimeout(() => marco.remove(), 1000);
+    };
+
+    if (documento.readyState === "complete") {
+        setTimeout(imprimir, 100);
+    } else {
+        marco.onload = imprimir;
+    }
+}
