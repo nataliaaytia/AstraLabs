@@ -151,3 +151,52 @@ export const NOMBRES_NIVEL = {
     critico: "Crítico",
     minimo: "En stock mínimo",
 };
+
+const CLAVE_ATENDIDAS = "amandita_alertas_atendidas_v1";
+
+export function cargarAtendidas() {
+    const datos = leerJSON(CLAVE_ATENDIDAS, {});
+    return datos && typeof datos === "object" && !Array.isArray(datos)
+        ? datos
+        : {};
+}
+
+function guardarAtendidas(atendidas) {
+    localStorage.setItem(CLAVE_ATENDIDAS, JSON.stringify(atendidas));
+}
+
+export function depurarAtendidas(alertas) {
+    const vigentes = new Set(alertas.map((a) => a.id));
+    const atendidas = cargarAtendidas();
+
+    const depuradas = Object.fromEntries(
+        Object.entries(atendidas).filter(([id]) => vigentes.has(id))
+    );
+
+    if (Object.keys(depuradas).length !== Object.keys(atendidas).length) {
+        guardarAtendidas(depuradas);
+    }
+
+    return depuradas;
+}
+
+export function marcarAtendida(alertaId, usuario) {
+    const atendidas = cargarAtendidas();
+
+    atendidas[alertaId] = {
+        fecha: new Date().toISOString(),
+        usuario: usuario || null,
+    };
+
+    guardarAtendidas(atendidas);
+    return atendidas;
+}
+
+export function reactivarAlerta(alertaId) {
+    const atendidas = cargarAtendidas();
+
+    delete atendidas[alertaId];
+
+    guardarAtendidas(atendidas);
+    return atendidas;
+}

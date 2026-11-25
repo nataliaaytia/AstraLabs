@@ -227,7 +227,12 @@ function App() {
 
       case "alertas":
         return esAdmin
-          ? <Alertas navegar={navegar} />
+          ? (
+            <Alertas
+              navegar={navegar}
+              usuarioActual={usuarioActual}
+            />
+          )
           : <Home navegar={navegar} />;
 
 

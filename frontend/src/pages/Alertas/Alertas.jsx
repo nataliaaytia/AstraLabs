@@ -3,7 +3,10 @@ import { inventarioApi } from "../../services/inventarioApi";
 import {
     NOMBRES_NIVEL,
     cargarConfiguracion,
+    depurarAtendidas,
     generarAlertas,
+    marcarAtendida,
+    reactivarAlerta,
     textoDias,
 } from "../../data/alertas";
 import "../InventarioComun.css";
@@ -13,10 +16,13 @@ const FILTROS = [
     { valor: "todas", texto: "Todas" },
     { valor: "vencimiento", texto: "Vencimientos" },
     { valor: "stock", texto: "Stock mínimo" },
+    { valor: "atendidas", texto: "Atendidas" },
 ];
 
-function Alertas({ navegar }) {
-    const [alertas, setAlertas] = useState([]);
+function Alertas({ navegar, usuarioActual }) {
+    const [todas, setTodas] = useState([]);
+    const [atendidas, setAtendidas] = useState({});
+    const [mensaje, setMensaje] = useState("");
     const [configuracion] = useState(cargarConfiguracion);
     const [filtro, setFiltro] = useState("todas");
     const [cargando, setCargando] = useState(true);
@@ -33,7 +39,10 @@ function Alertas({ navegar }) {
         inventarioApi.listarArticulos()
             .then((inventario) => generarAlertas(inventario, configuracion))
             .then((lista) => {
-                if (activo) setAlertas(lista);
+                if (activo) {
+                    setTodas(lista);
+                    setAtendidas(depurarAtendidas(lista));
+                }
             })
             .catch((err) => {
                 if (activo) setError(err.message);
@@ -52,13 +61,29 @@ function Alertas({ navegar }) {
         setError("");
 
         try {
-            setAlertas(await obtenerAlertas());
+            const lista = await obtenerAlertas();
+
+            setTodas(lista);
+            setAtendidas(depurarAtendidas(lista));
         } catch (err) {
             setError(err.message);
         } finally {
             setCargando(false);
         }
     };
+
+    const atender = (alerta) => {
+        setAtendidas({ ...marcarAtendida(alerta.id, usuarioActual?.nombre) });
+        setMensaje(`La alerta de ${alerta.articulo} se marcó como atendida.`);
+    };
+
+    const reactivar = (alerta) => {
+        setAtendidas({ ...reactivarAlerta(alerta.id) });
+        setMensaje(`La alerta de ${alerta.articulo} volvió a estar activa.`);
+    };
+
+    const alertas = todas.filter((a) => !atendidas[a.id]);
+    const yaAtendidas = todas.filter((a) => atendidas[a.id]);
 
     const deVencimiento = alertas.filter((a) => a.tipo === "vencimiento");
     const deStock = alertas.filter((a) => a.tipo === "stock");
@@ -69,7 +94,9 @@ function Alertas({ navegar }) {
 
     const visibles = filtro === "todas"
         ? alertas
-        : alertas.filter((a) => a.tipo === filtro);
+        : filtro === "atendidas"
+            ? yaAtendidas
+            : alertas.filter((a) => a.tipo === filtro);
 
     return (
         <section className="inv-pagina alertas-pagina">
@@ -137,6 +164,12 @@ function Alertas({ navegar }) {
                     </div>
                 </div>
 
+                {mensaje && (
+                    <div className="inv-mensaje exito" role="status">
+                        ✓ {mensaje}
+                    </div>
+                )}
+
                 <div className="inv-tarjeta">
                     <div className="alertas-barra">
                         <h2>Alertas activas</h2>
@@ -152,6 +185,9 @@ function Alertas({ navegar }) {
                                     onClick={() => setFiltro(opcion.valor)}
                                 >
                                     {opcion.texto}
+                                    {opcion.valor === "atendidas" &&
+                                        yaAtendidas.length > 0 &&
+                                        ` (${yaAtendidas.length})`}
                                 </button>
                             ))}
                         </div>
@@ -164,8 +200,16 @@ function Alertas({ navegar }) {
                     ) : visibles.length === 0 ? (
                         <div className="alertas-vacio">
                             <span>♡</span>
-                            <h3>Todo en orden por aquí</h3>
-                            <p>No hay alertas activas en esta categoría.</p>
+                            <h3>
+                                {filtro === "atendidas"
+                                    ? "Sin alertas atendidas"
+                                    : "Todo en orden por aquí"}
+                            </h3>
+                            <p>
+                                {filtro === "atendidas"
+                                    ? "Las alertas que marques como atendidas aparecerán aquí."
+                                    : "No hay alertas activas en esta categoría."}
+                            </p>
                         </div>
                     ) : (
                         <div className="alertas-lista">
@@ -200,6 +244,47 @@ function Alertas({ navegar }) {
                                                 {alerta.faltante} {alerta.unidad}
                                             </p>
                                         )}
+
+                                        <div className="alertas-item-acciones">
+                                            {atendidas[alerta.id] ? (
+                                                <>
+                                                    <small>
+                                                        Atendida el{" "}
+                                                        {new Date(
+                                                            atendidas[alerta.id].fecha
+                                                        ).toLocaleDateString("es-BO")}
+                                                        {atendidas[alerta.id].usuario &&
+                                                            ` por ${atendidas[alerta.id].usuario}`}
+                                                    </small>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => reactivar(alerta)}
+                                                    >
+                                                        Reactivar
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {alerta.tipo === "stock" && (
+                                                        <button
+                                                            type="button"
+                                                            className="secundario"
+                                                            onClick={() => navegar("stockMinimo")}
+                                                        >
+                                                            Ajustar mínimo
+                                                        </button>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => atender(alerta)}
+                                                    >
+                                                        ✓ Marcar atendida
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </article>
                             ))}
