@@ -1,15 +1,38 @@
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
-import { ESTADOS_PENDIENTES, calcularInsumos } from "../../data/insumos";
+import {
+    ESTADOS_PENDIENTES,
+    calcularInsumos,
+    resumirPlanes,
+} from "../../data/insumos";
 import "../InventarioComun.css";
 import "./InsumosFaltantes.css";
 
 const NOMBRES_ESTADO = {
     suficiente: "Suficiente",
+    "bajo-minimo": "Quedará bajo el mínimo",
     falta: "Falta",
     "sin-stock": "Sin stock",
     inexistente: "No existe",
 };
+
+const PASOS = [
+    {
+        icono: "♧",
+        titulo: "Elige un plan",
+        texto: "Selecciona un plan pendiente o revisa todos juntos.",
+    },
+    {
+        icono: "✧",
+        titulo: "Comparamos",
+        texto: "Lo que pide la receta contra lo disponible, sin contar lo vencido.",
+    },
+    {
+        icono: "✿",
+        titulo: "Repones",
+        texto: "Lo que falta para cocinar y lo que quedaría bajo el mínimo.",
+    },
+];
 
 function InsumosFaltantes({ navegar }) {
     const [planes, setPlanes] = useState([]);
@@ -48,27 +71,41 @@ function InsumosFaltantes({ navegar }) {
         };
     }, []);
 
+    const resumenPlanes = resumirPlanes(planes, inventario);
+
     const planesElegidos = seleccion === "todos"
         ? planes
         : planes.filter((p) => String(p.id) === seleccion);
 
     const insumos = calcularInsumos(planesElegidos, inventario);
     const faltantes = insumos.filter((i) => i.faltante > 0);
+    const bajoMinimo = insumos.filter((i) => i.estado === "bajo-minimo");
+    const porReponer = insumos.filter((i) => i.reponer > 0);
     const conVencidos = insumos.filter((i) => i.vencido > 0);
 
     const formatear = (numero) =>
         Number(Number(numero).toFixed(3)).toLocaleString("es-BO");
+
+    const elegir = (valor) => {
+        setSeleccion(valor);
+        setCopiado("");
+    };
+
+    const planActual = planesElegidos[0];
 
     const textoReposicion = [
         "LISTA DE REPOSICIÓN - CASA AMANDITA",
         "",
         seleccion === "todos"
             ? `Para ${planesElegidos.length} plan(es) pendiente(s):`
-            : `Para: ${planesElegidos[0]?.nombre || ""} (${planesElegidos[0]?.fecha || ""})`,
+            : `Para: ${planActual?.nombre || ""} (${planActual?.fecha || ""})`,
         "",
-        ...faltantes.map((insumo, indice) =>
+        ...porReponer.map((insumo, indice) =>
             `${indice + 1}. ${insumo.nombre}: ` +
-            `${formatear(insumo.faltante)} ${insumo.unidad}`
+            `${formatear(insumo.reponer)} ${insumo.unidad}` +
+            (insumo.faltante > 0
+                ? ` (faltan ${formatear(insumo.faltante)} para cocinar)`
+                : " (para mantener el mínimo)")
         ),
     ].join("\n");
 
@@ -102,9 +139,21 @@ function InsumosFaltantes({ navegar }) {
 
                 <p className="inv-descripcion">
                     Antes de cocinar, revisemos si tenemos todo lo
-                    necesario. Solo contamos el stock que no está
-                    vencido.
+                    necesario para cada plan de comida y qué conviene
+                    reponer para no quedarnos cortos.
                 </p>
+
+                <div className="insumos-pasos">
+                    {PASOS.map((paso, indice) => (
+                        <div key={paso.titulo}>
+                            <span className="insumos-paso-icono">{paso.icono}</span>
+                            <div>
+                                <strong>{indice + 1}. {paso.titulo}</strong>
+                                <p>{paso.texto}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
 
                 {error && (
                     <div className="inv-mensaje error" role="alert">
@@ -112,69 +161,14 @@ function InsumosFaltantes({ navegar }) {
                     </div>
                 )}
 
-                <div className="insumos-selector inv-tarjeta">
-                    <div className="inv-campo">
-                        <label htmlFor="insumos-plan">
-                            Plan de comida a revisar
-                        </label>
-
-                        <select
-                            id="insumos-plan"
-                            value={seleccion}
-                            onChange={(e) => {
-                                setSeleccion(e.target.value);
-                                setCopiado("");
-                            }}
-                            disabled={cargando || planes.length === 0}
-                        >
-                            <option value="todos">
-                                Todos los planes pendientes ({planes.length})
-                            </option>
-
-                            {planes.map((plan) => (
-                                <option key={plan.id} value={plan.id}>
-                                    {plan.fecha} · {plan.tipoComida} · {plan.nombre}
-                                </option>
-                            ))}
-                        </select>
+                <div className="inv-tarjeta insumos-planes-tarjeta">
+                    <div className="insumos-seccion-titulo">
+                        <h2>Planes pendientes</h2>
+                        <span>{planes.length} por cocinar</span>
                     </div>
-
-                    <div className="insumos-resumen">
-                        <div>
-                            <strong>{planesElegidos.length}</strong>
-                            <span>Plan(es)</span>
-                        </div>
-
-                        <div className={faltantes.length > 0 ? "alerta" : ""}>
-                            <strong>{faltantes.length}</strong>
-                            <span>Insumos faltantes</span>
-                        </div>
-
-                        <div>
-                            <strong>{insumos.length - faltantes.length}</strong>
-                            <span>Insumos completos</span>
-                        </div>
-                    </div>
-                </div>
-
-                {conVencidos.length > 0 && (
-                    <div className="insumos-aviso">
-                        <span>◷</span>
-                        <p>
-                            {conVencidos.length} insumo(s) tienen
-                            existencias vencidas que no se pueden
-                            usar en la preparación.
-                        </p>
-                    </div>
-                )}
-
-                <div className="inv-tarjeta">
-                    <h2>¿Qué necesitamos?</h2>
 
                     {cargando ? (
-                        <div className="inv-vacio">
-                            Revisando los planes...
-                        </div>
+                        <div className="inv-vacio">Revisando los planes...</div>
                     ) : planes.length === 0 ? (
                         <div className="insumos-vacio">
                             <span>♧</span>
@@ -192,70 +186,203 @@ function InsumosFaltantes({ navegar }) {
                                 Ir al planificador →
                             </button>
                         </div>
-                    ) : insumos.length === 0 ? (
-                        <div className="inv-vacio">
-                            El plan seleccionado no tiene ingredientes.
-                        </div>
                     ) : (
-                        <div className="insumos-lista">
-                            {insumos.map((insumo) => (
-                                <article
-                                    key={insumo.articuloId}
-                                    className={`insumos-item ${insumo.estado}`}
+                        <div className="insumos-planes">
+                            <button
+                                type="button"
+                                className={`insumos-plan todos ${seleccion === "todos" ? "activo" : ""}`}
+                                onClick={() => elegir("todos")}
+                                aria-pressed={seleccion === "todos"}
+                            >
+                                <span className="insumos-plan-tipo">Resumen</span>
+                                <strong>Todos los planes</strong>
+                                <small>
+                                    {resumenPlanes.filter((p) => p.listo).length} de{" "}
+                                    {resumenPlanes.length} listos para cocinar
+                                </small>
+                            </button>
+
+                            {resumenPlanes.map((plan) => (
+                                <button
+                                    type="button"
+                                    key={plan.id}
+                                    className={`insumos-plan ${seleccion === String(plan.id) ? "activo" : ""}`}
+                                    onClick={() => elegir(String(plan.id))}
+                                    aria-pressed={seleccion === String(plan.id)}
                                 >
-                                    <div className="insumos-item-superior">
-                                        <strong>{insumo.nombre}</strong>
+                                    <span className="insumos-plan-tipo">
+                                        {plan.tipoComida} · {plan.fecha}
+                                    </span>
 
-                                        <span className={`insumos-estado ${insumo.estado}`}>
-                                            {NOMBRES_ESTADO[insumo.estado]}
-                                        </span>
-                                    </div>
+                                    <strong>{plan.nombre}</strong>
 
-                                    <div
-                                        className="insumos-barra"
-                                        role="progressbar"
-                                        aria-label={`Disponibilidad de ${insumo.nombre}`}
-                                        aria-valuenow={insumo.porcentaje}
-                                        aria-valuemin="0"
-                                        aria-valuemax="100"
-                                    >
-                                        <div style={{ width: `${insumo.porcentaje}%` }} />
-                                    </div>
+                                    <small>
+                                        {plan.porciones
+                                            ? `${plan.porciones} porciones · `
+                                            : ""}
+                                        {plan.totalInsumos} ingrediente(s) ·{" "}
+                                        {plan.estado === "borrador" ? "Borrador" : "Confirmado"}
+                                    </small>
 
-                                    <div className="insumos-detalle">
-                                        <span>
-                                            Necesario:{" "}
-                                            <strong>
-                                                {formatear(insumo.necesario)} {insumo.unidad}
-                                            </strong>
-                                        </span>
-
-                                        <span>
-                                            Disponible:{" "}
-                                            <strong>
-                                                {formatear(insumo.disponible)} {insumo.unidad}
-                                            </strong>
-                                        </span>
-
-                                        {insumo.faltante > 0 && (
-                                            <span className="insumos-faltante">
-                                                Faltan {formatear(insumo.faltante)} {insumo.unidad}
-                                            </span>
-                                        )}
-                                    </div>
-                                </article>
+                                    <span className={`insumos-plan-estado ${plan.listo ? "listo" : "incompleto"}`}>
+                                        {plan.listo
+                                            ? "✓ Listo para cocinar"
+                                            : `Faltan ${plan.faltantes} insumo(s)`}
+                                    </span>
+                                </button>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {faltantes.length > 0 && (
+                {planes.length > 0 && (
+                    <div className="insumos-resumen">
+                        <div>
+                            <strong>{insumos.length}</strong>
+                            <span>Insumos revisados</span>
+                        </div>
+
+                        <div className={faltantes.length > 0 ? "alerta" : ""}>
+                            <strong>{faltantes.length}</strong>
+                            <span>No alcanzan</span>
+                        </div>
+
+                        <div className={bajoMinimo.length > 0 ? "aviso" : ""}>
+                            <strong>{bajoMinimo.length}</strong>
+                            <span>Quedarán bajo el mínimo</span>
+                        </div>
+
+                        <div>
+                            <strong>
+                                {insumos.length - faltantes.length - bajoMinimo.length}
+                            </strong>
+                            <span>Sin problema</span>
+                        </div>
+                    </div>
+                )}
+
+                {conVencidos.length > 0 && (
+                    <div className="insumos-aviso">
+                        <span>◷</span>
+                        <p>
+                            {conVencidos.map((i) =>
+                                `${i.nombre} (${formatear(i.vencido)} ${i.unidad})`
+                            ).join(", ")}
+                            {" "}tiene(n) existencias vencidas que no se
+                            cuentan como disponibles.
+                        </p>
+                    </div>
+                )}
+
+                {planes.length > 0 && (
+                    <div className="inv-tarjeta">
+                        <div className="insumos-seccion-titulo">
+                            <h2>
+                                {seleccion === "todos"
+                                    ? "¿Qué necesitamos en total?"
+                                    : `¿Qué necesita "${planActual?.nombre}"?`}
+                            </h2>
+                        </div>
+
+                        {insumos.length === 0 ? (
+                            <div className="inv-vacio">
+                                El plan seleccionado no tiene ingredientes.
+                            </div>
+                        ) : (
+                            <div className="insumos-lista">
+                                {insumos.map((insumo) => (
+                                    <article
+                                        key={insumo.articuloId}
+                                        className={`insumos-item ${insumo.estado}`}
+                                    >
+                                        <div className="insumos-item-superior">
+                                            <div>
+                                                <strong>{insumo.nombre}</strong>
+                                                {insumo.categoria && (
+                                                    <small>{insumo.categoria}</small>
+                                                )}
+                                            </div>
+
+                                            <span className={`insumos-estado ${insumo.estado}`}>
+                                                {NOMBRES_ESTADO[insumo.estado]}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            className="insumos-barra"
+                                            role="progressbar"
+                                            aria-label={`Disponibilidad de ${insumo.nombre}`}
+                                            aria-valuenow={insumo.porcentaje}
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"
+                                        >
+                                            <div style={{ width: `${insumo.porcentaje}%` }} />
+                                        </div>
+
+                                        <div className="insumos-datos">
+                                            <div>
+                                                <span>Necesario</span>
+                                                <strong>
+                                                    {formatear(insumo.necesario)} {insumo.unidad}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Disponible</span>
+                                                <strong>
+                                                    {formatear(insumo.disponible)} {insumo.unidad}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Quedará</span>
+                                                <strong>
+                                                    {formatear(insumo.restante)} {insumo.unidad}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Stock mínimo</span>
+                                                <strong>
+                                                    {insumo.minimo
+                                                        ? `${formatear(insumo.minimo)} ${insumo.unidad}`
+                                                        : "Sin definir"}
+                                                </strong>
+                                            </div>
+                                        </div>
+
+                                        <div className="insumos-pie">
+                                            <span>Se usa en: {insumo.usadoEn.join(", ")}</span>
+
+                                            {insumo.faltante > 0 ? (
+                                                <span className="insumos-faltante">
+                                                    Faltan {formatear(insumo.faltante)} {insumo.unidad} para cocinar
+                                                </span>
+                                            ) : insumo.reponer > 0 ? (
+                                                <span className="insumos-sugerencia">
+                                                    Reponer {formatear(insumo.reponer)} {insumo.unidad} para mantener el mínimo
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {porReponer.length > 0 && (
                     <div className="inv-tarjeta insumos-reposicion">
                         <span className="inv-etiqueta">
                             ✦ LISTA DE REPOSICIÓN
                         </span>
 
                         <h2>Antes de cocinar, reponer:</h2>
+
+                        <p className="insumos-reposicion-ayuda">
+                            La cantidad sugerida cubre lo que pide el plan
+                            y deja el artículo en su stock mínimo.
+                        </p>
 
                         <textarea
                             readOnly
