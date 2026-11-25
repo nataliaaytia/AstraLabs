@@ -222,3 +222,23 @@
 .donaciones-registrar-donante:hover {
     background: var(--salvia-claro);
 }
+.donaciones-perecedero {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 17px;
+    border: 1px solid #F1CDB7;
+    border-radius: 13px;
+    background: #FFF6F0;
+}
+
+.donaciones-perecedero span {
+    color: var(--coral);
+    font-size: 17px;
+}
+
+.donaciones-perecedero p {
+    color: #A34D41;
+    font-size: 12px;
+    line-height: 1.7;
+}

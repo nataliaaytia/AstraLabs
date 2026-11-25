@@ -2,6 +2,12 @@
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
 import { cargarDonantes } from "../../data/donantes";
+import {
+    asignarLote,
+    requiereVencimiento,
+    validarLoteRecepcion,
+    vincularLote,
+} from "../../data/lotes";
 import "../InventarioComun.css";
 import "./Donaciones.css";
 
@@ -14,11 +20,20 @@ const fechaLocal = () => {
     return `${anio}-${mes}-${dia}`;
 };
 
+const fechaManana = () => {
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+
+    return manana.toLocaleDateString("en-CA");
+};
+
 const FORMULARIO_INICIAL = {
     articuloId: "",
     cantidad: "",
     donanteId: "",
     fecha: fechaLocal(),
+    codigoLote: "",
+    fechaVencimiento: "",
 };
 
 function Donaciones({ navegar, usuarioActual }) {
@@ -85,6 +100,23 @@ function Donaciones({ navegar, usuarioActual }) {
                 throw new Error("Selecciona un donante registrado.");
             }
 
+            const articuloRecibido = articulos.find(
+                (a) => String(a.id) === String(formulario.articuloId)
+            );
+
+            const conLote = requiereVencimiento(articuloRecibido);
+
+            const datosLote = conLote
+                ? validarLoteRecepcion(
+                    {
+                        articuloId: formulario.articuloId,
+                        codigo: formulario.codigoLote,
+                        fechaVencimiento: formulario.fechaVencimiento,
+                    },
+                    articulos
+                )
+                : null;
+
             const resultado = await inventarioApi.registrarDonacion({
                 articuloId: formulario.articuloId,
                 cantidad: Number(formulario.cantidad),
@@ -95,6 +127,27 @@ function Donaciones({ navegar, usuarioActual }) {
             });
 
 
+            if (datosLote) {
+                const inventario = await inventarioApi.listarArticulos();
+
+                const lote = asignarLote(
+                    {
+                        articuloId: formulario.articuloId,
+                        codigo: datosLote.codigo,
+                        cantidad: Number(formulario.cantidad),
+                        fechaVencimiento: datosLote.fechaVencimiento,
+                    },
+                    inventario
+                );
+
+                vincularLote(lote.id, {
+                    origen: "donacion",
+                    donacionId: resultado.donacion.id,
+                    donante: resultado.donacion.donante,
+                    fechaRecepcion: resultado.donacion.fecha,
+                });
+            }
+
             setFormulario({ ...FORMULARIO_INICIAL });
             await cargarDatos();
 
@@ -102,7 +155,10 @@ function Donaciones({ navegar, usuarioActual }) {
                 tipo: "exito",
                 texto:
                     `Donación registrada correctamente. ` +
-                    `Stock actualizado: ${resultado.stockActual}.`,
+                    `Stock actualizado: ${resultado.stockActual}.` +
+                    (datosLote
+                        ? ` Lote ${datosLote.codigo} vence el ${datosLote.fechaVencimiento}.`
+                        : ""),
             });
         } catch (error) {
             setMensaje({
@@ -118,6 +174,8 @@ function Donaciones({ navegar, usuarioActual }) {
         (articulo) =>
             String(articulo.id) === String(formulario.articuloId)
     );
+
+    const pideLote = requiereVencimiento(articuloSeleccionado);
 
     return (
         <section className="inv-pagina donaciones-pagina">
@@ -256,6 +314,51 @@ function Donaciones({ navegar, usuarioActual }) {
                                 />
                             </div>
 
+
+                            {pideLote && (
+                                <>
+                                    <div className="donaciones-perecedero inv-ancho">
+                                        <span>◷</span>
+                                        <p>
+                                            {articuloSeleccionado.categoria === "Medicamentos"
+                                                ? "Este medicamento necesita lote y fecha de vencimiento para poder rastrearlo."
+                                                : "Este alimento es perecedero. Indica su lote y fecha de vencimiento."}
+                                        </p>
+                                    </div>
+
+                                    <div className="inv-campo">
+                                        <label htmlFor="donacion-lote">
+                                            Código del lote *
+                                        </label>
+
+                                        <input
+                                            id="donacion-lote"
+                                            name="codigoLote"
+                                            value={formulario.codigoLote}
+                                            onChange={cambiarCampo}
+                                            placeholder="Ej. LCH-024"
+                                            maxLength={30}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="inv-campo">
+                                        <label htmlFor="donacion-vencimiento">
+                                            Fecha de vencimiento *
+                                        </label>
+
+                                        <input
+                                            id="donacion-vencimiento"
+                                            type="date"
+                                            name="fechaVencimiento"
+                                            min={fechaManana()}
+                                            value={formulario.fechaVencimiento}
+                                            onChange={cambiarCampo}
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="inv-campo inv-ancho">
                                 <label htmlFor="donacion-donante">
