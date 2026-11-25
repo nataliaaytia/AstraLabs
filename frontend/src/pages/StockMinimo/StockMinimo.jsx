@@ -65,7 +65,8 @@ function StockMinimo({ navegar }) {
                 })
             );
 
-            const total = definirStockMinimo(pendientes, articulos);
+            const vigentes = await inventarioApi.listarArticulos();
+            const total = definirStockMinimo(pendientes, vigentes);
             const lista = await inventarioApi.listarArticulos();
 
             setArticulos(lista);

@@ -197,6 +197,23 @@ function Almacen({ navegar }) {
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
 
+
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("stockMinimo")}
+                    >
+                        <span className="almacen-acceso-icono">✿</span>
+
+                        <strong>Stock mínimo</strong>
+
+                        <small>
+                            Define cuándo reponer cada artículo
+                        </small>
+
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
                 </div>
 
 
