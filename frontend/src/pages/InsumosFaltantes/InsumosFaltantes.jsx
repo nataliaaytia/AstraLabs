@@ -17,6 +17,7 @@ function InsumosFaltantes({ navegar }) {
     const [seleccion, setSeleccion] = useState("todos");
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
+    const [copiado, setCopiado] = useState("");
 
     useEffect(() => {
         let activo = true;
@@ -58,6 +59,28 @@ function InsumosFaltantes({ navegar }) {
     const formatear = (numero) =>
         Number(Number(numero).toFixed(3)).toLocaleString("es-BO");
 
+    const textoReposicion = [
+        "LISTA DE REPOSICIÓN - CASA AMANDITA",
+        "",
+        seleccion === "todos"
+            ? `Para ${planesElegidos.length} plan(es) pendiente(s):`
+            : `Para: ${planesElegidos[0]?.nombre || ""} (${planesElegidos[0]?.fecha || ""})`,
+        "",
+        ...faltantes.map((insumo, indice) =>
+            `${indice + 1}. ${insumo.nombre}: ` +
+            `${formatear(insumo.faltante)} ${insumo.unidad}`
+        ),
+    ].join("\n");
+
+    const copiarLista = async () => {
+        try {
+            await navigator.clipboard.writeText(textoReposicion);
+            setCopiado("Lista de reposición copiada.");
+        } catch {
+            setCopiado("No se pudo copiar automáticamente. Selecciona el texto.");
+        }
+    };
+
     return (
         <section className="inv-pagina insumos-pagina">
             <div className="inv-contenedor">
@@ -98,7 +121,10 @@ function InsumosFaltantes({ navegar }) {
                         <select
                             id="insumos-plan"
                             value={seleccion}
-                            onChange={(e) => setSeleccion(e.target.value)}
+                            onChange={(e) => {
+                                setSeleccion(e.target.value);
+                                setCopiado("");
+                            }}
                             disabled={cargando || planes.length === 0}
                         >
                             <option value="todos">
@@ -222,6 +248,43 @@ function InsumosFaltantes({ navegar }) {
                         </div>
                     )}
                 </div>
+
+                {faltantes.length > 0 && (
+                    <div className="inv-tarjeta insumos-reposicion">
+                        <span className="inv-etiqueta">
+                            ✦ LISTA DE REPOSICIÓN
+                        </span>
+
+                        <h2>Antes de cocinar, reponer:</h2>
+
+                        <textarea
+                            readOnly
+                            value={textoReposicion}
+                            aria-label="Lista de reposición"
+                        />
+
+                        <div className="insumos-reposicion-pie">
+                            <p>
+                                Comparte esta lista para conseguir
+                                los insumos a tiempo.
+                            </p>
+
+                            <button
+                                type="button"
+                                className="inv-boton"
+                                onClick={copiarLista}
+                            >
+                                Copiar lista
+                            </button>
+                        </div>
+
+                        {copiado && (
+                            <div className="inv-mensaje exito" role="status">
+                                ✓ {copiado}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </section>
     );
