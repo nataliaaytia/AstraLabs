@@ -31,6 +31,8 @@ import NecesidadesCriticas from "./pages/NecesidadesCriticas/NecesidadesCriticas
 
 import StockMinimo from "./pages/StockMinimo/StockMinimo";
 
+import Alertas from "./pages/Alertas/Alertas";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -79,6 +81,7 @@ function App() {
       roles: esAdmin,
       necesidadesCriticas: esAdmin,
       stockMinimo: esAdmin,
+      alertas: esAdmin,
       stock: puedeVerAlmacen,
       salidas: esAlmacen,
       mermas: esAlmacen,
@@ -219,6 +222,12 @@ function App() {
       case "stockMinimo":
         return esAdmin
           ? <StockMinimo navegar={navegar} />
+          : <Home navegar={navegar} />;
+
+
+      case "alertas":
+        return esAdmin
+          ? <Alertas navegar={navegar} />
           : <Home navegar={navegar} />;
 
 

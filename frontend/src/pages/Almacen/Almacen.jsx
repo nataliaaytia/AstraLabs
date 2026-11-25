@@ -171,6 +171,17 @@ function Almacen({ navegar }) {
 
                 <div className="almacen-accesos">
                     <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("alertas")}
+                    >
+                        <span className="almacen-acceso-icono">◷</span>
+                        <strong>Panel de alertas</strong>
+                        <small>Vencimientos y stock mínimo en un solo lugar</small>
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
+                    <button
                         className="almacen-acceso"
                         onClick={() => navegar("stock")}
                     >
