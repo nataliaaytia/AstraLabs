@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalArticulo from "../../components/Articulos/ModalArticulo";
 import ModalExcedente from "../../components/Excedentes/Excedente";
 import {
@@ -13,6 +13,8 @@ import {
     cargarExcedentes,
     guardarExcedentes,
 } from "../../data/excedentes";
+import { inventarioApi } from "../../services/inventarioApi";
+import { cargarAtendidas, generarAlertas } from "../../data/alertas";
 
 import "./Almacen.css";
 
@@ -24,6 +26,35 @@ function Almacen({ navegar }) {
     const [mensaje, setMensaje] = useState(null);
     const [excedentes, setExcedentes] = useState(cargarExcedentes);
     const [articuloExcedente, setArticuloExcedente] = useState(null);
+    const [avisos, setAvisos] = useState({ vencimiento: 0, stock: 0 });
+
+    useEffect(() => {
+        let activo = true;
+
+        inventarioApi.listarArticulos()
+            .then((inventario) => {
+                if (!activo) return;
+
+                const atendidas = cargarAtendidas();
+                const activas = generarAlertas(inventario).filter(
+                    (alerta) => !atendidas[alerta.id]
+                );
+
+                setAvisos({
+                    vencimiento: activas.filter(
+                        (a) => a.tipo === "vencimiento"
+                    ).length,
+                    stock: activas.filter((a) => a.tipo === "stock").length,
+                });
+            })
+            .catch(() => {
+                if (activo) setAvisos({ vencimiento: 0, stock: 0 });
+            });
+
+        return () => {
+            activo = false;
+        };
+    }, []);
 
     // Registrar un artículo nuevo
     const registrarArticulo = (nuevoArticulo) => {
@@ -168,6 +199,37 @@ function Almacen({ navegar }) {
                         </p>
                     </div>
                 </div>
+
+                {avisos.vencimiento + avisos.stock > 0 && (
+                    <div className="almacen-aviso-alertas" role="status">
+                        <span aria-hidden="true">◷</span>
+
+                        <p>
+                            {avisos.vencimiento > 0 && (
+                                <strong>
+                                    {avisos.vencimiento} producto(s) próximos a vencer
+                                </strong>
+                            )}
+
+                            {avisos.vencimiento > 0 && avisos.stock > 0 && " y "}
+
+                            {avisos.stock > 0 && (
+                                <strong>
+                                    {avisos.stock} artículo(s) en stock mínimo
+                                </strong>
+                            )}
+
+                            {". Revisemos con calma qué reponer o usar primero."}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={() => navegar("alertas")}
+                        >
+                            Ver alertas →
+                        </button>
+                    </div>
+                )}
 
                 <div className="almacen-accesos">
                     <button
