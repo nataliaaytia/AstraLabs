@@ -93,3 +93,61 @@ export function textoDias(dias) {
 
     return `Vence en ${dias} días`;
 }
+
+export function alertasStockMinimo(inventario) {
+    return inventario
+        .map((articulo) => ({
+            articulo,
+            actual: Number(articulo.stock_actual) || 0,
+            minimo: Number(articulo.stock_minimo) || 0,
+        }))
+        .filter(({ actual, minimo }) => minimo > 0 && actual <= minimo)
+        .map(({ articulo, actual, minimo }) => {
+            const nivel = actual === 0
+                ? "agotado"
+                : actual <= minimo * 0.5
+                    ? "critico"
+                    : "minimo";
+
+            return {
+                id: `stock-${articulo.id}-${nivel}`,
+                tipo: "stock",
+                nivel,
+                articuloId: articulo.id,
+                articulo: articulo.nombre,
+                categoria: articulo.categoria,
+                actual,
+                minimo,
+                faltante: Number((minimo - actual).toFixed(3)),
+                unidad: articulo.unidad_medida,
+            };
+        });
+}
+
+const PRIORIDAD = {
+    vencido: 0,
+    agotado: 1,
+    urgente: 2,
+    critico: 3,
+    proximo: 4,
+    minimo: 5,
+};
+
+export function generarAlertas(inventario, configuracion = cargarConfiguracion()) {
+    return [
+        ...alertasVencimiento(inventario, configuracion.diasAnticipacion),
+        ...alertasStockMinimo(inventario),
+    ].sort((a, b) =>
+        PRIORIDAD[a.nivel] - PRIORIDAD[b.nivel] ||
+        a.articulo.localeCompare(b.articulo)
+    );
+}
+
+export const NOMBRES_NIVEL = {
+    vencido: "Vencido",
+    urgente: "Urgente",
+    proximo: "Próximo a vencer",
+    agotado: "Agotado",
+    critico: "Crítico",
+    minimo: "En stock mínimo",
+};
