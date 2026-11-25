@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
 import {
     NOMBRES_NIVEL,
+    OPCIONES_ANTICIPACION,
     cargarConfiguracion,
     depurarAtendidas,
     generarAlertas,
+    guardarConfiguracion,
     marcarAtendida,
     reactivarAlerta,
     textoDias,
@@ -23,7 +25,7 @@ function Alertas({ navegar, usuarioActual }) {
     const [todas, setTodas] = useState([]);
     const [atendidas, setAtendidas] = useState({});
     const [mensaje, setMensaje] = useState("");
-    const [configuracion] = useState(cargarConfiguracion);
+    const [configuracion, setConfiguracion] = useState(cargarConfiguracion);
     const [filtro, setFiltro] = useState("todas");
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
@@ -69,6 +71,22 @@ function Alertas({ navegar, usuarioActual }) {
             setError(err.message);
         } finally {
             setCargando(false);
+        }
+    };
+
+    const cambiarAnticipacion = (evento) => {
+        try {
+            const nueva = guardarConfiguracion({
+                diasAnticipacion: evento.target.value,
+            });
+
+            setCargando(true);
+            setConfiguracion(nueva);
+            setMensaje(
+                `Ahora verás los vencimientos de los próximos ${nueva.diasAnticipacion} días.`
+            );
+        } catch (err) {
+            setError(err.message);
         }
     };
 
@@ -162,6 +180,30 @@ function Alertas({ navegar, usuarioActual }) {
                         <strong>{deStock.length}</strong>
                         <small>Artículos por reponer</small>
                     </div>
+                </div>
+
+                <div className="alertas-configuracion">
+                    <span aria-hidden="true">◷</span>
+
+                    <div>
+                        <strong>Anticipación de vencimientos</strong>
+                        <p>
+                            ¿Con cuántos días de anticipación quieres
+                            enterarte de los productos por vencer?
+                        </p>
+                    </div>
+
+                    <select
+                        value={configuracion.diasAnticipacion}
+                        onChange={cambiarAnticipacion}
+                        aria-label="Días de anticipación"
+                    >
+                        {OPCIONES_ANTICIPACION.map((dias) => (
+                            <option key={dias} value={dias}>
+                                {dias} días antes
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {mensaje && (

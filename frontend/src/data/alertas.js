@@ -200,3 +200,22 @@ export function reactivarAlerta(alertaId) {
     guardarAtendidas(atendidas);
     return atendidas;
 }
+
+export const OPCIONES_ANTICIPACION = [3, 5, 7, 15, 30];
+
+export function guardarConfiguracion(datos) {
+    const dias = Number(datos.diasAnticipacion);
+
+    if (!OPCIONES_ANTICIPACION.includes(dias)) {
+        throw new Error("Selecciona una anticipación válida.");
+    }
+
+    const configuracion = { diasAnticipacion: dias };
+
+    localStorage.setItem(
+        CLAVE_CONFIGURACION,
+        JSON.stringify(configuracion)
+    );
+
+    return configuracion;
+}
