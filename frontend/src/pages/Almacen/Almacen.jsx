@@ -287,6 +287,23 @@ function Almacen({ navegar }) {
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
 
+
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("reportes")}
+                    >
+                        <span className="almacen-acceso-icono">▦</span>
+
+                        <strong>Reportes</strong>
+
+                        <small>
+                            Consulta y exporta la información del almacén
+                        </small>
+
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
                 </div>
 
 
