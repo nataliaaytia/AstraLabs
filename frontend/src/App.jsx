@@ -33,6 +33,8 @@ import StockMinimo from "./pages/StockMinimo/StockMinimo";
 
 import Alertas from "./pages/Alertas/Alertas";
 
+import InsumosFaltantes from "./pages/InsumosFaltantes/InsumosFaltantes";
+
 import "./App.css";
 
 const CLAVE_USUARIOS = "amandita_123";
@@ -88,6 +90,7 @@ function App() {
       planesComida: esAlmacen,
       planificadorComidas: esAlmacen,
       lotes: esAlmacen,
+      insumosFaltantes: esAlmacen,
       menus: esAlmacen,
       donaciones: esRecepcion,
       donantes: esRecepcion,
@@ -268,6 +271,11 @@ function App() {
       case "lotes":
         return esAlmacen
           ? <Lotes navegar={navegar} />
+          : <Home navegar={navegar} />;
+
+      case "insumosFaltantes":
+        return esAlmacen
+          ? <InsumosFaltantes navegar={navegar} />
           : <Home navegar={navegar} />;
 
       case "planificadorComidas":
