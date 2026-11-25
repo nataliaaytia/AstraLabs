@@ -4,6 +4,7 @@ import { inventarioApi } from "../../services/inventarioApi";
 import { cargarDonantes } from "../../data/donantes";
 import {
     asignarLote,
+    lotesPorDonacion,
     requiereVencimiento,
     validarLoteRecepcion,
     vincularLote,
@@ -40,6 +41,7 @@ function Donaciones({ navegar, usuarioActual }) {
     const [articulos, setArticulos] = useState([]);
     const [donaciones, setDonaciones] = useState([]);
     const [donantes, setDonantes] = useState(cargarDonantes);
+    const [lotesRecibidos, setLotesRecibidos] = useState(lotesPorDonacion);
     const [formulario, setFormulario] = useState({
         ...FORMULARIO_INICIAL,
     });
@@ -57,6 +59,7 @@ function Donaciones({ navegar, usuarioActual }) {
             setArticulos(lista);
             setDonaciones(historial);
             setDonantes(cargarDonantes());
+            setLotesRecibidos(lotesPorDonacion());
         } catch (error) {
             setMensaje({
                 tipo: "error",
@@ -451,6 +454,14 @@ function Donaciones({ navegar, usuarioActual }) {
                                             <strong>{donacion.articulo}</strong>
                                             <p>{donacion.donante}</p>
                                             <small>{donacion.fecha}</small>
+
+                                            {lotesRecibidos[donacion.id] && (
+                                                <span className="donaciones-lote">
+                                                    Lote {lotesRecibidos[donacion.id].codigo}
+                                                    {" · vence "}
+                                                    {lotesRecibidos[donacion.id].fechaVencimiento}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <span className="donaciones-cantidad">
