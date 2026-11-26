@@ -53,6 +53,13 @@ function PanelOperativo({ navegar }) {
             pagina: "planificadorComidas",
         },
 
+        {
+            titulo: "Insumos faltantes",
+            descripcion: "Revisa qué falta reponer antes de cocinar un plan.",
+            icono: "✿",
+            pagina: "insumosFaltantes",
+        },
+
 
     ];
 

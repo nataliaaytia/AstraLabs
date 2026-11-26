@@ -1,0 +1,145 @@
+.reportes-tipos {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.reportes-tipo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid var(--crema);
+    border-radius: 18px;
+    background: white;
+    text-align: left;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.reportes-tipo:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(81, 72, 62, .07);
+}
+
+.reportes-tipo.activo {
+    border-color: var(--salvia);
+    background: #E7EADD;
+}
+
+.reportes-tipo strong {
+    color: var(--texto);
+    font-family: "DM Serif Display", serif;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.reportes-tipo small {
+    color: var(--texto-suave);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.reportes-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.reportes-cabecera h2 {
+    margin-bottom: 6px;
+}
+
+.reportes-cabecera p {
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.reportes-fechas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 220px));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.reportes-tabla-scroll {
+    overflow-x: auto;
+}
+
+.reportes-tabla {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+.reportes-tabla th {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--crema);
+    color: var(--texto-suave);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.reportes-tabla td {
+    padding: 13px 12px;
+    border-bottom: 1px solid var(--crema);
+    color: var(--texto);
+    font-size: 12px;
+}
+
+.reportes-tabla tbody tr:nth-child(even) {
+    background: var(--crema-claro);
+}
+
+@media (max-width: 950px) {
+    .reportes-tipos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 550px) {
+    .reportes-tipos,
+    .reportes-fechas {
+        grid-template-columns: 1fr;
+    }
+}
+
+.reportes-exportar {
+    display: flex;
+    gap: 10px;
+}
+
+.reportes-boton-pdf {
+    padding: 14px 23px;
+    border: 1px solid #E9B0A5;
+    border-radius: 100px;
+    background: #FFF0EC;
+    color: #A34D41;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.reportes-boton-pdf:hover {
+    background: var(--durazno);
+}
+
+.reportes-boton-pdf:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 550px) {
+    .reportes-exportar {
+        width: 100%;
+    }
+
+    .reportes-exportar button {
+        flex: 1;
+    }
+}

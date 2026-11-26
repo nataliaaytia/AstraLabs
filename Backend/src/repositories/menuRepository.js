@@ -1,13 +1,20 @@
 const pool = require("../db/pool");
 
-async function listarMenus() {
+async function listarMenus({ q } = {}) {
+  const params = [];
+  let where = "WHERE m.activo = TRUE";
+  if (q) {
+    params.push(`%${q}%`);
+    where += ` AND m.nombre ILIKE $${params.length}`;
+  }
   const { rows } = await pool.query(
     `SELECT m.id, m.nombre, m.descripcion,
             COALESCE(json_agg(json_build_object('articuloId', mi.articulo_id,
               'cantidadPorPorcion', mi.cantidad_por_porcion)
               ORDER BY mi.id) FILTER (WHERE mi.id IS NOT NULL), '[]'::json) AS ingredientes
      FROM menus m LEFT JOIN menu_ingredientes mi ON mi.menu_id = m.id
-     WHERE m.activo = TRUE GROUP BY m.id ORDER BY m.nombre`,
+     ${where} GROUP BY m.id ORDER BY m.nombre`,
+    params,
   );
   return rows;
 }

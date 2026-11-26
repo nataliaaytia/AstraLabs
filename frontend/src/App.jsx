@@ -21,6 +21,10 @@ import Menus from "./pages/Menus/Menus";
 import Lotes from "./pages/Lotes/Lotes";
 import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
 import PlanesComida from "./pages/PlanesComida/PlanesComida";
+import StockMinimo from "./pages/StockMinimo/StockMinimo";
+import Alertas from "./pages/Alertas/Alertas";
+import InsumosFaltantes from "./pages/InsumosFaltantes/InsumosFaltantes";
+import Reportes from "./pages/Reportes/Reportes";
 
 import { authApi } from "./services/authApi";
 
@@ -89,7 +93,11 @@ function App() {
             lotes: esAlmacen,
             planificadorComidas: esAlmacen,
             planesComida: esAlmacen,
+            insumosFaltantes: esAlmacen,
             necesidadesCriticas: esAdmin,
+            stockMinimo: esAdmin,
+            alertas: esAdmin,
+            reportes: esAdmin,
         };
 
         if (!permisos[pagina]) {
@@ -237,6 +245,30 @@ function App() {
                     <Home navegar={navegar} />
                 );
 
+            case "stockMinimo":
+                return esAdmin ? (
+                    <StockMinimo navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "alertas":
+                return esAdmin ? (
+                    <Alertas
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "reportes":
+                return esAdmin ? (
+                    <Reportes navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
             case "login":
                 return usuarioActual ? (
                     <Home navegar={navegar} />
@@ -301,6 +333,13 @@ function App() {
                         navegar={navegar}
                         usuarioActual={usuarioActual}
                     />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "insumosFaltantes":
+                return esAlmacen ? (
+                    <InsumosFaltantes navegar={navegar} />
                 ) : (
                     <Home navegar={navegar} />
                 );

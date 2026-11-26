@@ -264,3 +264,69 @@ export function simularFEFO(consumos, inventario) {
 
     return { lotes, asignaciones };
 }
+
+export const CATEGORIAS_CON_VENCIMIENTO = [
+    "Alimentos",
+    "Medicamentos",
+];
+
+export function requiereVencimiento(articulo) {
+    return Boolean(articulo) &&
+        CATEGORIAS_CON_VENCIMIENTO.includes(articulo.categoria);
+}
+
+export function validarLoteRecepcion(datos, inventario) {
+    const codigo = datos.codigo?.trim().toUpperCase();
+    const fecha = datos.fechaVencimiento;
+
+    if (!codigo) {
+        throw new Error("Ingresa el código del lote recibido.");
+    }
+
+    if (!/^[A-Z0-9-]{2,30}$/.test(codigo)) {
+        throw new Error(
+            "El código del lote solo puede tener letras, números y guiones."
+        );
+    }
+
+    if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha) ||
+        Number.isNaN(new Date(`${fecha}T12:00:00`).getTime())) {
+        throw new Error("Selecciona una fecha de vencimiento válida.");
+    }
+
+    if (fecha <= hoyLocal()) {
+        throw new Error(
+            "No se pueden recibir productos vencidos o que vencen hoy."
+        );
+    }
+
+    const duplicado = obtenerLotes(inventario).some(
+        (l) =>
+            String(l.articuloId) === String(datos.articuloId) &&
+            l.codigo === codigo
+    );
+
+    if (duplicado) {
+        throw new Error("Ya existe ese código de lote para el artículo.");
+    }
+
+    return { codigo, fechaVencimiento: fecha };
+}
+
+export function vincularLote(loteId, datos) {
+    const lotes = leerLotes();
+
+    const actualizados = lotes.map((lote) =>
+        lote.id === loteId ? { ...lote, ...datos } : lote
+    );
+
+    guardarLotes(actualizados);
+}
+
+export function lotesPorDonacion() {
+    return Object.fromEntries(
+        leerLotes()
+            .filter((lote) => lote.donacionId)
+            .map((lote) => [lote.donacionId, lote])
+    );
+}
