@@ -17,7 +17,13 @@ const FORMULARIO_INICIAL = {
   cantidad: "",
   donanteId: "",
   fecha: fechaLocal(),
+  numeroLote: "",
+  fechaVencimiento: "",
 };
+
+const requiereLote = (articulo) =>
+  Boolean(articulo) &&
+  (articulo.es_perecedero === true || articulo.categoria === "Medicinas");
 
 function Donaciones({ navegar, usuarioActual }) {
   const [articulos, setArticulos] = useState([]);
@@ -85,6 +91,19 @@ function Donaciones({ navegar, usuarioActual }) {
         throw new Error("Selecciona un donante registrado.");
       }
 
+      const articuloRecibido = articulos.find(
+        (a) => String(a.id) === String(formulario.articuloId),
+      );
+
+      const conLote = requiereLote(articuloRecibido);
+      const numeroLote = formulario.numeroLote.trim().toUpperCase();
+
+      if (conLote && (!numeroLote || !formulario.fechaVencimiento)) {
+        throw new Error(
+          "Este artículo es perecedero o medicina: indica el lote y la fecha de vencimiento.",
+        );
+      }
+
       const resultado = await inventarioApi.registrarDonacion({
         articuloId: formulario.articuloId,
         cantidad: Number(formulario.cantidad),
@@ -92,6 +111,10 @@ function Donaciones({ navegar, usuarioActual }) {
         donante: donanteSeleccionado.nombre,
         fecha: formulario.fecha,
         usuarioId: usuarioActual?.id,
+        ...(numeroLote ? { numeroLote } : {}),
+        ...(formulario.fechaVencimiento
+          ? { fechaVencimiento: formulario.fechaVencimiento }
+          : {}),
       });
 
       setDonaciones((anteriores) => [
@@ -101,6 +124,8 @@ function Donaciones({ navegar, usuarioActual }) {
           donante: donanteSeleccionado.nombre,
           fecha: formulario.fecha,
           cantidad: Number(formulario.cantidad),
+          numero_lote: numeroLote || null,
+          fecha_vencimiento: formulario.fechaVencimiento || null,
         },
         ...anteriores,
       ]);
@@ -127,6 +152,8 @@ function Donaciones({ navegar, usuarioActual }) {
   const articuloSeleccionado = articulos.find(
     (articulo) => String(articulo.id) === String(formulario.articuloId),
   );
+
+  const pideLote = requiereLote(articuloSeleccionado);
 
   return (
     <section className="inv-pagina donaciones-pagina">
@@ -236,6 +263,48 @@ function Donaciones({ navegar, usuarioActual }) {
                 />
               </div>
 
+              {pideLote && (
+                <>
+                  <div className="donaciones-perecedero inv-ancho">
+                    <span>◷</span>
+                    <p>
+                      {articuloSeleccionado.categoria === "Medicinas"
+                        ? "Este medicamento necesita lote y fecha de vencimiento para poder rastrearlo."
+                        : "Este alimento es perecedero. Indica su lote y fecha de vencimiento."}
+                    </p>
+                  </div>
+
+                  <div className="inv-campo">
+                    <label htmlFor="donacion-lote">Número de lote *</label>
+
+                    <input
+                      id="donacion-lote"
+                      name="numeroLote"
+                      value={formulario.numeroLote}
+                      onChange={cambiarCampo}
+                      placeholder="Ej. LCH-024"
+                      maxLength={30}
+                      required
+                    />
+                  </div>
+
+                  <div className="inv-campo">
+                    <label htmlFor="donacion-vencimiento">
+                      Fecha de vencimiento *
+                    </label>
+
+                    <input
+                      id="donacion-vencimiento"
+                      type="date"
+                      name="fechaVencimiento"
+                      value={formulario.fechaVencimiento}
+                      onChange={cambiarCampo}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="inv-campo inv-ancho">
                 <label htmlFor="donacion-donante">
                   Donante o empresa benefactora *
@@ -308,6 +377,14 @@ function Donaciones({ navegar, usuarioActual }) {
                       <strong>{donacion.articulo}</strong>
                       <p>{donacion.donante}</p>
                       <small>{donacion.fecha}</small>
+
+                      {donacion.numero_lote && (
+                        <span className="donaciones-lote">
+                          Lote {donacion.numero_lote}
+                          {donacion.fecha_vencimiento &&
+                            ` · vence ${donacion.fecha_vencimiento}`}
+                        </span>
+                      )}
                     </div>
 
                     <span className="donaciones-cantidad">

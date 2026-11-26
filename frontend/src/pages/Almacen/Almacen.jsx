@@ -5,6 +5,7 @@ import ModalExcedente from "../../components/Excedentes/Excedente";
 import { UNIDADES_MEDIDA } from "../../data/catalogo";
 import { DESTINOS_EXCEDENTE } from "../../data/excedentes";
 import { inventarioApi } from "../../services/inventarioApi";
+import { cargarAtendidas, generarAlertas } from "../../data/alertas";
 
 import "./Almacen.css";
 
@@ -36,6 +37,7 @@ function Almacen({ navegar, usuarioActual }) {
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [mensaje, setMensaje] = useState(null);
     const [articuloExcedente, setArticuloExcedente] = useState(null);
+    const [avisos, setAvisos] = useState({ vencimiento: 0, stock: 0 });
 
     const nombresCategorias = categorias.map((c) => c.nombre);
 
@@ -59,6 +61,34 @@ function Almacen({ navegar, usuarioActual }) {
     useEffect(() => {
         cargarDatos();
     }, [cargarDatos]);
+
+    useEffect(() => {
+        let activo = true;
+
+        inventarioApi.listarArticulos()
+            .then((inventario) => {
+                if (!activo) return;
+
+                const atendidas = cargarAtendidas();
+                const activas = generarAlertas(inventario).filter(
+                    (alerta) => !atendidas[alerta.id]
+                );
+
+                setAvisos({
+                    vencimiento: activas.filter(
+                        (a) => a.tipo === "vencimiento"
+                    ).length,
+                    stock: activas.filter((a) => a.tipo === "stock").length,
+                });
+            })
+            .catch(() => {
+                if (activo) setAvisos({ vencimiento: 0, stock: 0 });
+            });
+
+        return () => {
+            activo = false;
+        };
+    }, []);
 
     const registrarArticulo = async (nuevoArticulo) => {
         const nombre = nuevoArticulo.nombre.trim().replace(/\s+/g, " ");
@@ -219,7 +249,49 @@ function Almacen({ navegar, usuarioActual }) {
                     </div>
                 </div>
 
+                {avisos.vencimiento + avisos.stock > 0 && (
+                    <div className="almacen-aviso-alertas" role="status">
+                        <span aria-hidden="true">◷</span>
+
+                        <p>
+                            {avisos.vencimiento > 0 && (
+                                <strong>
+                                    {avisos.vencimiento} producto(s) próximos a vencer
+                                </strong>
+                            )}
+
+                            {avisos.vencimiento > 0 && avisos.stock > 0 && " y "}
+
+                            {avisos.stock > 0 && (
+                                <strong>
+                                    {avisos.stock} artículo(s) en stock mínimo
+                                </strong>
+                            )}
+
+                            {". Revisemos con calma qué reponer o usar primero."}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={() => navegar("alertas")}
+                        >
+                            Ver alertas →
+                        </button>
+                    </div>
+                )}
+
                 <div className="almacen-accesos">
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("alertas")}
+                    >
+                        <span className="almacen-acceso-icono">◷</span>
+                        <strong>Panel de alertas</strong>
+                        <small>Vencimientos y stock mínimo en un solo lugar</small>
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
                     <button
                         className="almacen-acceso"
                         onClick={() => navegar("stock")}
@@ -239,6 +311,28 @@ function Almacen({ navegar, usuarioActual }) {
                         <small>
                             Consultar faltantes y preparar solicitudes de donación
                         </small>
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("stockMinimo")}
+                    >
+                        <span className="almacen-acceso-icono">✿</span>
+                        <strong>Stock mínimo</strong>
+                        <small>Define cuándo reponer cada artículo</small>
+                        <span className="almacen-acceso-flecha">↗</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        className="almacen-acceso"
+                        onClick={() => navegar("reportes")}
+                    >
+                        <span className="almacen-acceso-icono">▦</span>
+                        <strong>Reportes</strong>
+                        <small>Consulta y exporta la información del almacén</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
                 </div>
