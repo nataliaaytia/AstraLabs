@@ -13,28 +13,44 @@ const reportesRouter = require("./routes/reportes");
 const menusRouter = require("./routes/menus");
 const planesComidaRouter = require("./routes/planesComida");
 const lotesRouter = require("./routes/lotes");
+const alertasRouter = require("./routes/alertas");
+const movimientosRouter = require("./routes/movimientos");
+const exportacionesRouter = require("./routes/exportaciones");
+
+//Seguridad
+const { autenticar, requiereRol } = require("./middleware/authMiddleware");
+const { registrarFiltros } = require("./middleware/logFiltros");
 
 const app = express();
 app.use(cors()); // en producción: restringir a los orígenes reales del frontend
 app.use(express.json());
+app.use(registrarFiltros);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", servicio: "API Inventario - AstraLabs" });
 });
 
+//exportaciones
+app.use(exportacionesRouter);
+
+// Pública: solo el login
 app.use("/api/auth", authRouter);
-app.use("/api/usuarios", usuariosRouter);
-app.use("/api/salidas", salidasRouter);
-app.use("/api/articulos", stockRouter);
-app.use("/api/mermas", mermasRouter);
-app.use("/api", catalogoRouter);
-app.use("/api/excedentes", excedentesRouter);
-app.use("/api/entradas", entradasRouter);
-app.use("/api/donantes", donantesRouter);
-app.use("/api/reportes", reportesRouter);
-app.use("/api/menus", menusRouter);
-app.use("/api/planes-comida", planesComidaRouter);
-app.use("/api/lotes", lotesRouter);
+
+// Todo lo demás exige token válido
+app.use("/api/usuarios", autenticar, usuariosRouter);
+app.use("/api/salidas", autenticar, salidasRouter);
+app.use("/api/articulos", autenticar, stockRouter);
+app.use("/api/mermas", autenticar, mermasRouter);
+app.use("/api/excedentes", autenticar, excedentesRouter);
+app.use("/api/entradas", autenticar, entradasRouter);
+app.use("/api/donantes", autenticar, donantesRouter);
+app.use("/api/reportes", autenticar, reportesRouter);
+app.use("/api/menus", autenticar, menusRouter);
+app.use("/api/planes-comida", autenticar, planesComidaRouter);
+app.use("/api/lotes", autenticar, lotesRouter);
+app.use("/api/alertas", autenticar, alertasRouter);
+app.use("/api/movimientos", autenticar, movimientosRouter);
+app.use("/api", autenticar, catalogoRouter);
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
