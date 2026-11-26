@@ -14,6 +14,10 @@ const CLAVES_ANTIGUAS = [
     "amandita_movimientos_demo_v1",
     "amandita_catalogo",
     "amandita_excedentes",
+    "amandita_lotes_v1",
+    "amandita_donantes_v1",
+    "amandita_config_alertas_v1",
+    "amandita_alertas_atendidas_v1",
 ];
 
 try {
