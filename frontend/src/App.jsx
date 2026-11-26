@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Cabecera from "./components/Cabecera/Cabecera";
 import Home from "./pages/Home/Home";
@@ -8,360 +8,364 @@ import PanelOperativo from "./pages/Almacen/PanelOperativo";
 import Login from "./pages/Login/Login";
 
 import GestionRoles from "./pages/GestionRoles/GestionRoles";
-import { USUARIOS_DEMO, ROLES } from "./data/usuariosDemo";
+import Donaciones from "./pages/Donaciones/Donaciones";
+import Donantes from "./pages/Donantes/Donantes";
+import NecesidadesCriticas from "./pages/NecesidadesCriticas/NecesidadesCriticas";
 
+import { ROLES } from "./data/usuariosDemo";
 
 import Stock from "./pages/Stock/Stock";
 import Salidas from "./pages/Salidas/Salidas";
 import Mermas from "./pages/Mermas/Mermas";
-
-import Donaciones from "./pages/Donaciones/Donaciones";
-
-import Donantes from "./pages/Donantes/Donantes";
-
-import PlanesComida from "./pages/PlanesComida/PlanesComida";
-
-import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
-
 import Menus from "./pages/Menus/Menus";
-
 import Lotes from "./pages/Lotes/Lotes";
-
-import NecesidadesCriticas from "./pages/NecesidadesCriticas/NecesidadesCriticas";
-
+import PlanificadorComidas from "./pages/PlanificadorComidas/PlanificadorComidas";
+import PlanesComida from "./pages/PlanesComida/PlanesComida";
 import StockMinimo from "./pages/StockMinimo/StockMinimo";
-
 import Alertas from "./pages/Alertas/Alertas";
-
 import InsumosFaltantes from "./pages/InsumosFaltantes/InsumosFaltantes";
-
 import Reportes from "./pages/Reportes/Reportes";
+
+import { authApi } from "./services/authApi";
+
+import {
+    guardarSesion,
+    limpiarSesion,
+    obtenerToken,
+    obtenerUsuarioGuardado,
+    registrarAlExpirarSesion,
+} from "./services/api";
 
 import "./App.css";
 
-const CLAVE_USUARIOS = "amandita_123";
-const CLAVE_SESION = "callatericardo";
-
-function cargarUsuarios() {
-  try {
-    const guardados = JSON.parse(
-      localStorage.getItem(CLAVE_USUARIOS) || "{}"
-    );
-
-    return USUARIOS_DEMO.map((usuario) => ({
-      ...usuario,
-      rol: Object.values(ROLES).includes(guardados[usuario.id])
-        ? guardados[usuario.id]
-        : usuario.rol,
-    }));
-  } catch {
-    return USUARIOS_DEMO;
-  }
-}
-
 function App() {
-  const [paginaActual, setPaginaActual] = useState("home");
+    const [paginaActual, setPaginaActual] = useState("home");
 
-  const [usuarios, setUsuarios] = useState(cargarUsuarios);
+    const [usuarios, setUsuarios] = useState([]);
+    const [errorUsuarios, setErrorUsuarios] = useState("");
 
-  const [sesionId, setSesionId] = useState(() => {
-    return Number(localStorage.getItem(CLAVE_SESION)) || null;
-  });
-
-  const usuarioActual =
-    usuarios.find((u) => u.id === sesionId) || null;
-
-  const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
-  const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
-  const esRecepcion = usuarioActual?.rol === ROLES.RECEPCION;
-  const puedeVerAlmacen = esAdmin || esAlmacen;
-
-
-  const navegar = (pagina) => {
-    const permisos = {
-      home: true,
-      login: !usuarioActual,
-      almacen: puedeVerAlmacen,
-      roles: esAdmin,
-      necesidadesCriticas: esAdmin,
-      stockMinimo: esAdmin,
-      alertas: esAdmin,
-      reportes: esAdmin,
-      stock: puedeVerAlmacen,
-      salidas: esAlmacen,
-      mermas: esAlmacen,
-      planesComida: esAlmacen,
-      planificadorComidas: esAlmacen,
-      lotes: esAlmacen,
-      insumosFaltantes: esAlmacen,
-      menus: esAlmacen,
-      donaciones: esRecepcion,
-      donantes: esRecepcion,
-    };
-
-    if (!permisos[pagina]) {
-      setPaginaActual("home");
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    setPaginaActual(pagina);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-
-  const iniciarSesion = (correo, contrasena) => {
-    const usuario = usuarios.find(
-      (u) =>
-        u.correo.toLowerCase() === correo.trim().toLowerCase() &&
-        u.contrasena === contrasena
+    const [usuarioActual, setUsuarioActual] = useState(() =>
+        obtenerToken() ? obtenerUsuarioGuardado() : null
     );
 
-    if (!usuario) {
-      return {
-        exito: false,
-        mensaje: "Correo o contraseña incorrectos.",
-      };
-    }
+    const esAdmin = usuarioActual?.rol === ROLES.ADMIN;
+    const esAlmacen = usuarioActual?.rol === ROLES.ALMACEN;
+    const esRecepcion = usuarioActual?.rol === ROLES.RECEPCION;
 
-    setSesionId(usuario.id);
-    localStorage.setItem(CLAVE_SESION, String(usuario.id));
-    setPaginaActual("home");
+    const puedeVerAlmacen = esAdmin || esAlmacen;
 
-    return {
-      exito: true,
-      mensaje: "Inicio de sesión correcto.",
-    };
-  };
+    useEffect(() => {
+        registrarAlExpirarSesion(() => {
+            setUsuarioActual(null);
+            setPaginaActual("login");
+        });
+    }, []);
 
-  const cerrarSesion = () => {
-    setSesionId(null);
-    localStorage.removeItem(CLAVE_SESION);
-    setPaginaActual("home");
-  };
+    const cargarUsuarios = useCallback(async () => {
+        try {
+            const lista = await authApi.listarUsuarios();
 
-  const cambiarRol = (usuarioId, nuevoRol) => {
-    if (!esAdmin) {
-      return {
-        exito: false,
-        mensaje: "No tienes permisos para asignar roles.",
-      };
-    }
+            setUsuarios(lista);
+            setErrorUsuarios("");
+        } catch (err) {
+            setErrorUsuarios(err.message);
+        }
+    }, []);
 
-    if (!Object.values(ROLES).includes(nuevoRol)) {
-      return {
-        exito: false,
-        mensaje: "El rol seleccionado no existe.",
-      };
-    }
+    useEffect(() => {
+        if (paginaActual === "roles" && esAdmin) {
+            cargarUsuarios();
+        }
+    }, [paginaActual, esAdmin, cargarUsuarios]);
 
-    const usuario = usuarios.find((u) => u.id === usuarioId);
+    const navegar = (pagina) => {
+        const permisos = {
+            home: true,
+            login: !usuarioActual,
+            almacen: puedeVerAlmacen,
+            roles: esAdmin,
+            donaciones: esRecepcion,
+            donantes: esRecepcion,
+            stock: puedeVerAlmacen,
+            salidas: esAlmacen,
+            mermas: esAlmacen,
+            menus: esAlmacen,
+            lotes: esAlmacen,
+            planificadorComidas: esAlmacen,
+            planesComida: esAlmacen,
+            insumosFaltantes: esAlmacen,
+            necesidadesCriticas: esAdmin,
+            stockMinimo: esAdmin,
+            alertas: esAdmin,
+            reportes: esAdmin,
+        };
 
-    if (!usuario) {
-      return {
-        exito: false,
-        mensaje: "Usuario no encontrado.",
-      };
-    }
-
-    if (usuarioId === usuarioActual.id) {
-      return {
-        exito: false,
-        mensaje: "No puedes modificar tu propio rol.",
-      };
-    }
-
-    const actualizados = usuarios.map((u) =>
-      u.id === usuarioId ? { ...u, rol: nuevoRol } : u
-    );
-
-    setUsuarios(actualizados);
-
-    localStorage.setItem(
-      CLAVE_USUARIOS,
-      JSON.stringify(
-        Object.fromEntries(
-          actualizados.map((u) => [u.id, u.rol])
-        )
-      )
-    );
-
-    return {
-      exito: true,
-      mensaje: "El rol se actualizó correctamente.",
-    };
-  };
-
-  const mostrarPagina = () => {
-    switch (paginaActual) {
-
-      case "almacen":
-        if (esAdmin) {
-          return <Almacen navegar={navegar} />;
+        if (!permisos[pagina]) {
+            setPaginaActual("home");
+            window.scrollTo(0, 0);
+            return;
         }
 
-        if (esAlmacen) {
-          return <PanelOperativo navegar={navegar} />;
+        setPaginaActual(pagina);
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    };
+
+    const iniciarSesion = async (correo, contrasena) => {
+        try {
+            const { token, usuario } = await authApi.login(
+                correo.trim(),
+                contrasena
+            );
+
+            guardarSesion({ token, usuario });
+
+            setUsuarioActual(usuario);
+            setPaginaActual("home");
+
+            return {
+                exito: true,
+                mensaje: "Inicio de sesión correcto.",
+            };
+        } catch (err) {
+            return {
+                exito: false,
+                mensaje: err.message,
+            };
+        }
+    };
+
+    const cerrarSesion = () => {
+        limpiarSesion();
+
+        setUsuarioActual(null);
+        setUsuarios([]);
+        setPaginaActual("home");
+    };
+
+    const cambiarRol = async (usuarioId, nuevoRol) => {
+        if (!esAdmin) {
+            return {
+                exito: false,
+                mensaje: "No tienes permisos para asignar roles.",
+            };
         }
 
-        return <Home navegar={navegar} />;
+        if (!Object.values(ROLES).includes(nuevoRol)) {
+            return {
+                exito: false,
+                mensaje: "El rol seleccionado no existe.",
+            };
+        }
 
+        if (usuarioId === usuarioActual.id) {
+            return {
+                exito: false,
+                mensaje: "No puedes modificar tu propio rol.",
+            };
+        }
 
-      case "roles":
-        return esAdmin ? (
-          <GestionRoles
-            usuarios={usuarios}
-            usuarioActual={usuarioActual}
-            cambiarRol={cambiarRol}
-          />
-        ) : (
-          <Home navegar={navegar} />
-        );
+        try {
+            await authApi.cambiarRol(usuarioId, nuevoRol);
 
+            setUsuarios((anteriores) =>
+                anteriores.map((u) =>
+                    u.id === usuarioId
+                        ? { ...u, rol: nuevoRol }
+                        : u
+                )
+            );
 
-      case "necesidadesCriticas":
-        return esAdmin
-          ? <NecesidadesCriticas navegar={navegar} />
-          : <Home navegar={navegar} />;
+            return {
+                exito: true,
+                mensaje: "El rol se actualizó correctamente.",
+            };
+        } catch (err) {
+            return {
+                exito: false,
+                mensaje: err.message,
+            };
+        }
+    };
 
+    const mostrarPagina = () => {
+        switch (paginaActual) {
+            case "almacen":
+                if (esAdmin) {
+                    return (
+                        <Almacen
+                            navegar={navegar}
+                            usuarioActual={usuarioActual}
+                        />
+                    );
+                }
 
-      case "stockMinimo":
-        return esAdmin
-          ? <StockMinimo navegar={navegar} />
-          : <Home navegar={navegar} />;
+                if (esAlmacen) {
+                    return <PanelOperativo navegar={navegar} />;
+                }
 
+                return <Home navegar={navegar} />;
 
-      case "reportes":
-        return esAdmin
-          ? <Reportes navegar={navegar} />
-          : <Home navegar={navegar} />;
+            case "donaciones":
+                return esRecepcion ? (
+                    <Donaciones
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
 
+            case "donantes":
+                return esRecepcion ? (
+                    <Donantes navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
 
-      case "alertas":
-        return esAdmin
-          ? (
-            <Alertas
-              navegar={navegar}
-              usuarioActual={usuarioActual}
+            case "roles":
+                return esAdmin ? (
+                    <GestionRoles
+                        usuarios={usuarios}
+                        usuarioActual={usuarioActual}
+                        cambiarRol={cambiarRol}
+                        errorCarga={errorUsuarios}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "necesidadesCriticas":
+                return esAdmin ? (
+                    <NecesidadesCriticas navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "stockMinimo":
+                return esAdmin ? (
+                    <StockMinimo navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "alertas":
+                return esAdmin ? (
+                    <Alertas
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "reportes":
+                return esAdmin ? (
+                    <Reportes navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "login":
+                return usuarioActual ? (
+                    <Home navegar={navegar} />
+                ) : (
+                    <Login
+                        navegar={navegar}
+                        iniciarSesion={iniciarSesion}
+                    />
+                );
+
+            case "stock":
+                return puedeVerAlmacen ? (
+                    <Stock navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "salidas":
+                return esAlmacen ? (
+                    <Salidas
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "mermas":
+                return esAlmacen ? (
+                    <Mermas
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "menus":
+                return esAlmacen ? (
+                    <Menus navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "lotes":
+                return esAlmacen ? (
+                    <Lotes navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "planificadorComidas":
+                return esAlmacen ? (
+                    <PlanificadorComidas navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "planesComida":
+                return esAlmacen ? (
+                    <PlanesComida
+                        navegar={navegar}
+                        usuarioActual={usuarioActual}
+                    />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            case "insumosFaltantes":
+                return esAlmacen ? (
+                    <InsumosFaltantes navegar={navegar} />
+                ) : (
+                    <Home navegar={navegar} />
+                );
+
+            default:
+                return <Home navegar={navegar} />;
+        }
+    };
+
+    return (
+        <div className="app">
+            <Cabecera
+                paginaActual={paginaActual}
+                navegar={navegar}
+                usuarioActual={usuarioActual}
+                esAdmin={esAdmin}
+                esRecepcion={esRecepcion}
+                puedeVerAlmacen={puedeVerAlmacen}
+                cerrarSesion={cerrarSesion}
             />
-          )
-          : <Home navegar={navegar} />;
 
-
-
-      case "login":
-        return usuarioActual ? (
-          <Home navegar={navegar} />
-        ) : (
-          <Login
-            navegar={navegar}
-            iniciarSesion={iniciarSesion}
-          />
-        );
-
-
-      case "stock":
-        return puedeVerAlmacen
-          ? <Stock navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-      case "salidas":
-        return esAlmacen
-          ? (
-            <Salidas
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
-
-
-
-      case "lotes":
-        return esAlmacen
-          ? <Lotes navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-      case "insumosFaltantes":
-        return esAlmacen
-          ? <InsumosFaltantes navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-      case "planificadorComidas":
-        return esAlmacen
-          ? (
-            <PlanificadorComidas navegar={navegar} />
-          )
-          : <Home navegar={navegar} />;
-
-
-
-      case "planesComida":
-        return esAlmacen
-          ? (
-            <PlanesComida
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
-
-
-      case "menus":
-        return esAlmacen
-          ? <Menus navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-
-      case "mermas":
-        return esAlmacen
-          ? (
-            <Mermas
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
-
-      case "donaciones":
-        return esRecepcion
-          ? (
-            <Donaciones
-              navegar={navegar}
-              usuarioActual={usuarioActual}
-            />
-          )
-          : <Home navegar={navegar} />;
-
-      case "donantes":
-        return esRecepcion
-          ? <Donantes navegar={navegar} />
-          : <Home navegar={navegar} />;
-
-      default:
-        return <Home navegar={navegar} />;
-    }
-  };
-
-  return (
-    <div className="app">
-
-      <Cabecera
-        paginaActual={paginaActual}
-        navegar={navegar}
-        usuarioActual={usuarioActual}
-        esAdmin={esAdmin}
-        puedeVerAlmacen={puedeVerAlmacen}
-        esRecepcion={esRecepcion}
-        cerrarSesion={cerrarSesion}
-      />
-
-
-      <main className="app-contenido">
-        {mostrarPagina()}
-      </main>
-    </div>
-  );
+            <main className="app-contenido">
+                {mostrarPagina()}
+            </main>
+        </div>
+    );
 }
 
 export default App;

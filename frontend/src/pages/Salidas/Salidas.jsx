@@ -55,11 +55,9 @@ function Salidas({ navegar, usuarioActual }) {
         e.preventDefault();
 
         const cantidad = Number(formulario.cantidad);
-        //const articuloId = Number(formulario.articuloId);
-        const articuloId = formulario.articuloId;
+        const articuloId = Number(formulario.articuloId);
 
-        if (!articuloId) {
-            //if (!Number.isInteger(articuloId) || articuloId <= 0) {
+        if (!Number.isInteger(articuloId) || articuloId <= 0) {
             setMensaje({ tipo: "error", texto: "Selecciona un artículo." });
             return;
         }

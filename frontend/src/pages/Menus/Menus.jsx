@@ -16,15 +16,15 @@ const FORMULARIO_INICIAL = {
 
 function Menus({ navegar }) {
     const [articulos, setArticulos] = useState([]);
-    const [menus, setMenus] = useState(cargarMenus);
+    const [menus, setMenus] = useState([]);
     const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
     const [busqueda, setBusqueda] = useState("");
     const [mensaje, setMensaje] = useState(null);
     const [cargando, setCargando] = useState(true);
 
     useEffect(() => {
-        inventarioApi.listarArticulos()
-            .then(setArticulos)
+        Promise.all([inventarioApi.listarArticulos(), cargarMenus()])
+            .then(([articulos, menus]) => { setArticulos(articulos); setMenus(menus); })
             .catch((error) => {
                 setMensaje({
                     tipo: "error",
@@ -77,14 +77,14 @@ function Menus({ navegar }) {
         }));
     };
 
-    const guardarMenu = (evento) => {
+    const guardarMenu = async (evento) => {
         evento.preventDefault();
         setMensaje(null);
 
         try {
-            const nuevo = registrarMenu(formulario, articulos);
+            const nuevo = await registrarMenu(formulario, articulos);
 
-            setMenus(cargarMenus());
+            setMenus(await cargarMenus());
             setFormulario({
                 ...FORMULARIO_INICIAL,
                 ingredientes: [
@@ -108,8 +108,7 @@ function Menus({ navegar }) {
         articulos.find((a) => String(a.id) === String(id));
 
     const filtrados = menus.filter((menu) =>
-        menu.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        menu.tipoComida.toLowerCase().includes(busqueda.toLowerCase())
+        menu.nombre.toLowerCase().includes(busqueda.toLowerCase())
     );
 
     return (
@@ -185,23 +184,6 @@ function Menus({ navegar }) {
                                     onChange={cambiarCampo}
                                     required
                                 />
-                            </div>
-
-                            <div className="inv-campo inv-ancho">
-                                <label htmlFor="menu-tipo">
-                                    Tipo de comida *
-                                </label>
-                                <select
-                                    id="menu-tipo"
-                                    name="tipoComida"
-                                    value={formulario.tipoComida}
-                                    onChange={cambiarCampo}
-                                >
-                                    <option>Desayuno</option>
-                                    <option>Almuerzo</option>
-                                    <option>Merienda</option>
-                                    <option>Otro</option>
-                                </select>
                             </div>
 
                             <div className="inv-campo inv-ancho">
@@ -359,9 +341,6 @@ function Menus({ navegar }) {
                             <div className="menus-lista">
                                 {filtrados.map((menu) => (
                                     <article className="menus-registro" key={menu.id}>
-                                        <span className="menus-tipo">
-                                            {menu.tipoComida}
-                                        </span>
 
                                         <h3>{menu.nombre}</h3>
 

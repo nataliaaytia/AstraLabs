@@ -46,12 +46,10 @@ function Mermas({ navegar, usuarioActual }) {
     const guardarMerma = async (e) => {
         e.preventDefault();
 
-        //const articuloId = Number(formulario.articuloId);
-        const articuloId = formulario.articuloId;
+        const articuloId = Number(formulario.articuloId);
         const cantidad = Number(formulario.cantidad);
 
-        //if (!Number.isInteger(articuloId) || articuloId <= 0) {
-        if (!articuloId) {
+        if (!Number.isInteger(articuloId) || articuloId <= 0) {
             setMensaje({ tipo: "error", texto: "Selecciona un artículo." });
             return;
         }

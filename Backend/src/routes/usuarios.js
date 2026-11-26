@@ -6,7 +6,10 @@ const router = express.Router();
 
 router.get("/", autenticar, requiereRol("Administradora"), async (req, res) => {
   try {
-    const usuarios = await rolesService.listar();
+    const usuarios = await rolesService.listar({
+      q: req.query.q?.trim(),
+      rol: req.query.rol,
+    });
     res.json(usuarios);
   } catch (err) {
     res.status(500).json({ error: err.message });

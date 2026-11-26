@@ -1,6 +1,6 @@
-const pool = require("../db/pool");
-const mermaService = require("./mermaService");
-const inventarioRepository = require("../repositories/inventarioRepository");
+const pool = require("../src/db/pool");
+const mermaService = require("../src/services/mermaService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
 
 const NOMBRE_ARTICULO_TEST = "Articulo Test HU-06";
 const EMAIL_USUARIO_TEST = "test-hu06@astralabs.test";

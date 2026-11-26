@@ -5,8 +5,8 @@ const ROLES_VALIDOS = ["Administradora", "Recepcion", "Almacen_Cocina"];
 /**
  * Servicio de Gestión de Roles (RF-26).
  */
-async function listar() {
-  return usuarioRepository.listarUsuarios();
+async function listar(filtros = {}) {
+  return usuarioRepository.listarUsuarios(filtros);
 }
 
 async function cambiarRol({

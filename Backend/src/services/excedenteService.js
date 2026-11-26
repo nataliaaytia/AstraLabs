@@ -11,6 +11,7 @@ async function registrarExcedente({
   cantidad,
   usuarioId,
   destino,
+  observaciones,
 }) {
   if (!destino) {
     throw new Error(
@@ -26,8 +27,13 @@ async function registrarExcedente({
     cantidadTotal: cantidad,
     usuarioId,
     destino,
+    observaciones,
     movimientosFEFO,
   });
 }
 
-module.exports = { registrarExcedente };
+async function listarExcedentes(filtros = {}) {
+  return inventarioRepository.listarExcedentes(filtros);
+}
+
+module.exports = { registrarExcedente, listarExcedentes };

@@ -1,7 +1,7 @@
-jest.mock("../repositories/usuarioRepository");
+jest.mock("../src/repositories/usuarioRepository");
 
-const usuarioRepository = require("../repositories/usuarioRepository");
-const rolesService = require("./rolesService");
+const usuarioRepository = require("../src/repositories/usuarioRepository");
+const rolesService = require("../src/services/rolesService");
 
 describe("Servicio de Gestión de Roles (RF-26)", () => {
   beforeEach(() => jest.clearAllMocks());

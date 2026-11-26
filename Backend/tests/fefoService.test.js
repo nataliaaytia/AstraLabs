@@ -1,4 +1,4 @@
-const { descontarPorFEFO } = require("./fefoService");
+const { descontarPorFEFO } = require("../src/services/fefoService");
 
 describe("Gestor de Inventario y FEFO (RF-05, RF-20)", () => {
   test("descuenta primero del lote con fecha de vencimiento mas proxima", () => {

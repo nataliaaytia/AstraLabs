@@ -1,7 +1,7 @@
-jest.mock("../repositories/inventarioRepository");
+jest.mock("../src/repositories/inventarioRepository");
 
-const inventarioRepository = require("../repositories/inventarioRepository");
-const excedenteService = require("./excedenteService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
+const excedenteService = require("../src/services/excedenteService");
 
 describe("Servicio de Excedentes (RF-09)", () => {
   beforeEach(() => jest.clearAllMocks());

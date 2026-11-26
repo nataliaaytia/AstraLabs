@@ -11,6 +11,7 @@ const FORMULARIO_INICIAL = {
 function ModalExcedente({ articulo, onCerrar, onGuardar }) {
     const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
     const [error, setError] = useState("");
+    const [guardando, setGuardando] = useState(false);
 
     useEffect(() => {
         if (articulo) {
@@ -39,15 +40,20 @@ function ModalExcedente({ articulo, onCerrar, onGuardar }) {
         setError("");
     };
 
-    const enviarFormulario = (evento) => {
+    const enviarFormulario = async (evento) => {
         evento.preventDefault();
 
-        const resultado = onGuardar({
+        if (guardando) return;
+        setGuardando(true);
+
+        const resultado = await onGuardar({
             articuloId: articulo.id,
             cantidad: Number(formulario.cantidad),
             destino: formulario.destino,
             observaciones: formulario.observaciones.trim(),
         });
+
+        setGuardando(false);
 
         if (!resultado.exito) {
             setError(resultado.mensaje);

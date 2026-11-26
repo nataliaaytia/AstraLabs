@@ -1,32 +1,66 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ModalArticulo from "../../components/Articulos/ModalArticulo";
 import ModalExcedente from "../../components/Excedentes/Excedente";
-import {
-    CATEGORIAS,
-    UNIDADES_MEDIDA,
-    cargarArticulos,
-    guardarArticulos,
-} from "../../data/catalogo";
-import {
-    DESTINOS_EXCEDENTE,
-    cargarExcedentes,
-    guardarExcedentes,
-} from "../../data/excedentes";
+import { UNIDADES_MEDIDA } from "../../data/catalogo";
+import { DESTINOS_EXCEDENTE } from "../../data/excedentes";
 import { inventarioApi } from "../../services/inventarioApi";
 import { cargarAtendidas, generarAlertas } from "../../data/alertas";
 
 import "./Almacen.css";
 
-function Almacen({ navegar }) {
-    const [articulos, setArticulos] = useState(cargarArticulos);
+const normalizarArticulo = (a) => ({
+    id: a.id,
+    nombre: a.nombre,
+    categoria: a.categoria,
+    unidadMedida: a.unidad_medida,
+    fechaRegistro: a.created_at,
+});
+
+const normalizarExcedente = (e) => ({
+    id: e.id,
+    articuloId: e.articulo_id,
+    articulo: e.articulo,
+    unidadMedida: e.unidad_medida,
+    cantidad: Number(e.cantidad),
+    destino: e.destino,
+    observaciones: e.observaciones,
+    fecha: e.fecha,
+});
+
+function Almacen({ navegar, usuarioActual }) {
+    const [articulos, setArticulos] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [excedentes, setExcedentes] = useState([]);
     const [modalAbierto, setModalAbierto] = useState(false);
     const [busqueda, setBusqueda] = useState("");
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [mensaje, setMensaje] = useState(null);
-    const [excedentes, setExcedentes] = useState(cargarExcedentes);
     const [articuloExcedente, setArticuloExcedente] = useState(null);
     const [avisos, setAvisos] = useState({ vencimiento: 0, stock: 0 });
+
+    const nombresCategorias = categorias.map((c) => c.nombre);
+
+    const cargarDatos = useCallback(async () => {
+        try {
+            const [listaArticulos, listaCategorias, listaExcedentes] =
+                await Promise.all([
+                    inventarioApi.listarArticulos(),
+                    inventarioApi.listarCategorias(),
+                    inventarioApi.listarExcedentes(),
+                ]);
+
+            setArticulos(listaArticulos.map(normalizarArticulo));
+            setCategorias(listaCategorias);
+            setExcedentes(listaExcedentes.map(normalizarExcedente));
+        } catch (err) {
+            setMensaje({ tipo: "error", texto: err.message });
+        }
+    }, []);
+
+    useEffect(() => {
+        cargarDatos();
+    }, [cargarDatos]);
 
     useEffect(() => {
         let activo = true;
@@ -56,13 +90,16 @@ function Almacen({ navegar }) {
         };
     }, []);
 
-    // Registrar un artículo nuevo
-    const registrarArticulo = (nuevoArticulo) => {
+    const registrarArticulo = async (nuevoArticulo) => {
         const nombre = nuevoArticulo.nombre.trim().replace(/\s+/g, " ");
+
+        const categoria = categorias.find(
+            (c) => c.nombre === nuevoArticulo.categoria
+        );
 
         if (
             !nombre ||
-            !CATEGORIAS.includes(nuevoArticulo.categoria) ||
+            !categoria ||
             !UNIDADES_MEDIDA.includes(nuevoArticulo.unidadMedida)
         ) {
             return {
@@ -90,24 +127,18 @@ function Almacen({ navegar }) {
             };
         }
 
-        const articulo = {
-            id: crypto.randomUUID(),
-            nombre,
-            categoria: nuevoArticulo.categoria,
-            unidadMedida: nuevoArticulo.unidadMedida,
-            fechaRegistro: new Date().toISOString(),
-        };
-
-        const actualizados = [...articulos, articulo];
-
-        if (!guardarArticulos(actualizados)) {
-            return {
-                exito: false,
-                mensaje: "No fue posible guardar el artículo.",
-            };
+        try {
+            await inventarioApi.crearArticulo({
+                nombre,
+                categoriaId: categoria.id,
+                unidadMedida: nuevoArticulo.unidadMedida,
+            });
+        } catch (err) {
+            return { exito: false, mensaje: err.message };
         }
 
-        setArticulos(actualizados);
+        await cargarDatos();
+
         setMensaje({
             tipo: "exito",
             texto: `"${nombre}" se registró correctamente en el catálogo.`,
@@ -119,49 +150,67 @@ function Almacen({ navegar }) {
         };
     };
 
-    // HU-09
-    const registrarExcedente = ({ articuloId, cantidad, destino, observaciones }) => {
+    const registrarExcedente = async ({
+        articuloId,
+        cantidad,
+        destino,
+        observaciones
+    }) => {
         const articulo = articulos.find((a) => a.id === articuloId);
 
         if (!articulo) {
-            return { exito: false, mensaje: "El artículo ya no existe en el catálogo." };
+            return {
+                exito: false,
+                mensaje: "El artículo ya no existe en el catálogo.",
+            };
         }
 
         if (!Number.isFinite(cantidad) || cantidad <= 0) {
-            return { exito: false, mensaje: "Ingresa una cantidad mayor a cero." };
+            return {
+                exito: false,
+                mensaje: "Ingresa una cantidad mayor a cero.",
+            };
         }
 
         if (!DESTINOS_EXCEDENTE.includes(destino)) {
-            return { exito: false, mensaje: "Selecciona el destino del excedente." };
+            return {
+                exito: false,
+                mensaje: "Selecciona el destino del excedente.",
+            };
         }
 
-        const excedente = {
-            id: crypto.randomUUID(),
-            articuloId,
-            articulo: articulo.nombre,
-            unidadMedida: articulo.unidadMedida,
-            cantidad,
-            destino,
-            observaciones,
-            fecha: new Date().toISOString(),
-        };
-
-        const actualizados = [excedente, ...excedentes];
-
-        if (!guardarExcedentes(actualizados)) {
-            return { exito: false, mensaje: "No fue posible registrar el excedente." };
+        if (!usuarioActual?.id) {
+            return {
+                exito: false,
+                mensaje: "Necesitas iniciar sesión.",
+            };
         }
 
-        setExcedentes(actualizados);
+        try {
+            await inventarioApi.registrarExcedente({
+                articuloId: Number(articuloId),
+                cantidad,
+                usuarioId: Number(usuarioActual.id),
+                destino,
+                observaciones,
+            });
+        } catch (err) {
+            return { exito: false, mensaje: err.message };
+        }
+
+        await cargarDatos();
+
         setMensaje({
             tipo: "exito",
             texto: `"${articulo.nombre}" se marcó como excedente con destino: ${destino}.`,
         });
 
-        return { exito: true, mensaje: "Excedente registrado correctamente." };
+        return {
+            exito: true,
+            mensaje: "Excedente registrado correctamente.",
+        };
     };
 
-    // Buscar y filtrar
     const articulosFiltrados = articulos.filter((articulo) => {
         const coincideNombre = articulo.nombre
             .toLowerCase()
@@ -253,23 +302,17 @@ function Almacen({ navegar }) {
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
 
-
                     <button
-                        type="button"
                         className="almacen-acceso"
                         onClick={() => navegar("necesidadesCriticas")}
                     >
-                        <span className="almacen-acceso-icono">▥</span>
-
+                        <span className="almacen-acceso-icono">✧</span>
                         <strong>Necesidades críticas</strong>
-
                         <small>
-                            Reporte de artículos prioritarios para donaciones
+                            Consultar faltantes y preparar solicitudes de donación
                         </small>
-
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
-
 
                     <button
                         type="button"
@@ -277,16 +320,10 @@ function Almacen({ navegar }) {
                         onClick={() => navegar("stockMinimo")}
                     >
                         <span className="almacen-acceso-icono">✿</span>
-
                         <strong>Stock mínimo</strong>
-
-                        <small>
-                            Define cuándo reponer cada artículo
-                        </small>
-
+                        <small>Define cuándo reponer cada artículo</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
-
 
                     <button
                         type="button"
@@ -294,21 +331,13 @@ function Almacen({ navegar }) {
                         onClick={() => navegar("reportes")}
                     >
                         <span className="almacen-acceso-icono">▦</span>
-
                         <strong>Reportes</strong>
-
-                        <small>
-                            Consulta y exporta la información del almacén
-                        </small>
-
+                        <small>Consulta y exporta la información del almacén</small>
                         <span className="almacen-acceso-flecha">↗</span>
                     </button>
-
                 </div>
 
-
                 <div className="almacen-encabezado">
-
                     <button
                         className="almacen-nuevo"
                         onClick={() => {
@@ -330,13 +359,17 @@ function Almacen({ navegar }) {
                     <div className="almacen-estadistica">
                         <span>Categorías utilizadas</span>
                         <strong>{categoriasUsadas}</strong>
-                        <small>De {CATEGORIAS.length} disponibles</small>
+                        <small>De {categorias.length} disponibles</small>
                     </div>
 
                     <div className="almacen-estadistica almacen-estadistica-especial">
-                        <span aria-hidden="true" className="almacen-estadistica-corazon">
+                        <span
+                            aria-hidden="true"
+                            className="almacen-estadistica-corazon"
+                        >
                             ♡
                         </span>
+
                         <p>
                             Organizando recursos,
                             <br />
@@ -350,8 +383,12 @@ function Almacen({ navegar }) {
                         className={`almacen-mensaje almacen-mensaje-${mensaje.tipo}`}
                         role="status"
                     >
-                        <span aria-hidden="true">✓</span>
+                        <span aria-hidden="true">
+                            {mensaje.tipo === "exito" ? "✓" : "✕"}
+                        </span>
+
                         {mensaje.texto}
+
                         <button
                             onClick={() => setMensaje(null)}
                             aria-label="Cerrar mensaje"
@@ -392,8 +429,11 @@ function Almacen({ navegar }) {
                         >
                             <option value="">Todas las categorías</option>
 
-                            {CATEGORIAS.map((categoria) => (
-                                <option key={categoria} value={categoria}>
+                            {nombresCategorias.map((categoria) => (
+                                <option
+                                    key={categoria}
+                                    value={categoria}
+                                >
                                     {categoria}
                                 </option>
                             ))}
@@ -421,7 +461,9 @@ function Almacen({ navegar }) {
                                                     <span className="almacen-articulo-icono">
                                                         ✿
                                                     </span>
-                                                    <strong>{articulo.nombre}</strong>
+                                                    <strong>
+                                                        {articulo.nombre}
+                                                    </strong>
                                                 </div>
                                             </td>
 
@@ -458,11 +500,13 @@ function Almacen({ navegar }) {
                         </div>
                     ) : (
                         <div className="almacen-vacio">
-                            <div className="almacen-vacio-icono">౨ৎ⋆˚｡⋆</div>
+                            <div className="almacen-vacio-icono">
+                                ౨ৎ⋆˚｡⋆
+                            </div>
 
                             <h3>
                                 {articulos.length === 0
-                                    ? "Nuestro catálogo está vacio w"
+                                    ? "Nuestro catálogo está vacío"
                                     : "No encontramos artículos"}
                             </h3>
 
@@ -487,7 +531,10 @@ function Almacen({ navegar }) {
                     <div className="almacen-catalogo-cabecera">
                         <div>
                             <h2>Excedentes registrados</h2>
-                            <p>Historial de artículos marcados como excedente y su destino.</p>
+                            <p>
+                                Historial de artículos marcados
+                                como excedente y su destino.
+                            </p>
                         </div>
 
                         <span className="almacen-total">
@@ -511,12 +558,27 @@ function Almacen({ navegar }) {
                                 <tbody>
                                     {excedentes.map((excedente) => (
                                         <tr key={excedente.id}>
-                                            <td><strong>{excedente.articulo}</strong></td>
-                                            <td>{excedente.cantidad} {excedente.unidadMedida}</td>
-                                            <td>{excedente.destino}</td>
-                                            <td>{excedente.observaciones || "—"}</td>
                                             <td>
-                                                {new Date(excedente.fecha).toLocaleDateString("es-BO")}
+                                                <strong>
+                                                    {excedente.articulo}
+                                                </strong>
+                                            </td>
+
+                                            <td>
+                                                {excedente.cantidad}{" "}
+                                                {excedente.unidadMedida}
+                                            </td>
+
+                                            <td>{excedente.destino}</td>
+
+                                            <td>
+                                                {excedente.observaciones || "—"}
+                                            </td>
+
+                                            <td>
+                                                {new Date(
+                                                    excedente.fecha
+                                                ).toLocaleDateString("es-BO")}
                                             </td>
                                         </tr>
                                     ))}
@@ -536,7 +598,6 @@ function Almacen({ navegar }) {
                 >
                     ← Volver al inicio
                 </button>
-
             </div>
 
             <ModalExcedente
@@ -549,8 +610,10 @@ function Almacen({ navegar }) {
                 abierto={modalAbierto}
                 onCerrar={() => setModalAbierto(false)}
                 onGuardar={registrarArticulo}
+                categorias={nombresCategorias}
             />
         </section>
     );
 }
+
 export default Almacen;

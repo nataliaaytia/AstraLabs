@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
-import { asignarLote, obtenerLotes } from "../../data/lotes";
 import "../InventarioComun.css";
 import "./Lotes.css";
 
@@ -23,10 +22,10 @@ function Lotes({ navegar }) {
     const [filtro, setFiltro] = useState("");
 
     const cargarDatos = async () => {
-        const lista = await inventarioApi.listarArticulos();
+        const [lista, listaLotes] = await Promise.all([inventarioApi.listarArticulos(), inventarioApi.listarLotes()]);
 
         setArticulos(lista);
-        setLotes(obtenerLotes(lista));
+        setLotes(listaLotes);
     };
 
     useEffect(() => {
@@ -53,7 +52,7 @@ function Lotes({ navegar }) {
         evento.preventDefault();
 
         try {
-            const nuevo = asignarLote(formulario, articulos);
+            const nuevo = await inventarioApi.asignarLote(formulario);
 
             await cargarDatos();
 

@@ -1,6 +1,6 @@
-const pool = require("../db/pool");
-const salidaService = require("./salidaService");
-const inventarioRepository = require("../repositories/inventarioRepository");
+const pool = require("../src/db/pool");
+const salidaService = require("../src/services/salidaService");
+const inventarioRepository = require("../src/repositories/inventarioRepository");
 
 /**
  * Prueba de integración (RF-05): no usa mocks. Inserta datos reales,
