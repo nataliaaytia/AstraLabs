@@ -1,87 +1,26 @@
-import { obtenerLotes } from "./lotes";
+// Helpers puros para mostrar las alertas que entrega el backend (/api/alertas).
+// Las alertas, su estado (pendiente/atendida) y el umbral de anticipación
+// viven en la base de datos; aquí solo se normalizan para la pantalla.
 
-const CLAVE_CONFIGURACION = "amandita_config_alertas_v1";
+export const OPCIONES_ANTICIPACION = [3, 5, 7, 15, 30];
 
-export const DIAS_ANTICIPACION_DEFECTO = 7;
+export const NOMBRES_NIVEL = {
+    vencido: "Vencido",
+    urgente: "Urgente",
+    proximo: "Próximo a vencer",
+    agotado: "Agotado",
+    critico: "Crítico",
+    minimo: "En stock mínimo",
+};
 
-function leerJSON(clave, valorDefecto) {
-    try {
-        const datos = localStorage.getItem(clave);
-        return datos ? JSON.parse(datos) : valorDefecto;
-    } catch {
-        return valorDefecto;
-    }
-}
-
-function hoyLocal() {
-    return new Date().toLocaleDateString("en-CA");
-}
-
-export function diasHasta(fecha) {
-    if (!fecha) return null;
-
-    const [anio, mes, dia] = fecha.split("-").map(Number);
-    const [a, m, d] = hoyLocal().split("-").map(Number);
-
-    return Math.round(
-        (Date.UTC(anio, mes - 1, dia) - Date.UTC(a, m - 1, d)) /
-        86400000
-    );
-}
-
-export function cargarConfiguracion() {
-    const config = leerJSON(CLAVE_CONFIGURACION, {});
-    const dias = Number(config.diasAnticipacion);
-
-    return {
-        diasAnticipacion:
-            Number.isInteger(dias) && dias >= 1 && dias <= 90
-                ? dias
-                : DIAS_ANTICIPACION_DEFECTO,
-    };
-}
-
-export function alertasVencimiento(inventario, diasAnticipacion) {
-    const lotes = obtenerLotes(inventario);
-
-    return lotes
-        .filter(
-            (lote) =>
-                lote.fechaVencimiento &&
-                Number(lote.cantidadDisponible) > 0
-        )
-        .map((lote) => ({
-            lote,
-            dias: diasHasta(lote.fechaVencimiento),
-            articulo: inventario.find(
-                (a) => String(a.id) === String(lote.articuloId)
-            ),
-        }))
-        .filter(({ dias, articulo }) =>
-            articulo && dias <= diasAnticipacion
-        )
-        .map(({ lote, dias, articulo }) => {
-            const nivel = dias < 0
-                ? "vencido"
-                : dias <= 2
-                    ? "urgente"
-                    : "proximo";
-
-            return {
-                id: `vencimiento-${lote.id}-${nivel}`,
-                tipo: "vencimiento",
-                nivel,
-                articuloId: articulo.id,
-                articulo: articulo.nombre,
-                categoria: articulo.categoria,
-                codigoLote: lote.codigo,
-                fechaVencimiento: lote.fechaVencimiento,
-                dias,
-                cantidad: Number(lote.cantidadDisponible),
-                unidad: articulo.unidad_medida,
-            };
-        });
-}
+const PRIORIDAD = {
+    vencido: 0,
+    agotado: 1,
+    urgente: 2,
+    critico: 3,
+    proximo: 4,
+    minimo: 5,
+};
 
 export function textoDias(dias) {
     if (dias < 0) {
@@ -94,128 +33,61 @@ export function textoDias(dias) {
     return `Vence en ${dias} días`;
 }
 
-export function alertasStockMinimo(inventario) {
-    return inventario
-        .map((articulo) => ({
-            articulo,
-            actual: Number(articulo.stock_actual) || 0,
-            minimo: Number(articulo.stock_minimo) || 0,
-        }))
-        .filter(({ actual, minimo }) => minimo > 0 && actual <= minimo)
-        .map(({ articulo, actual, minimo }) => {
-            const nivel = actual === 0
-                ? "agotado"
-                : actual <= minimo * 0.5
-                    ? "critico"
-                    : "minimo";
+function nivelDe(alerta) {
+    if (alerta.tipo === "vencimiento") {
+        const dias = Number(alerta.dias_restantes);
 
-            return {
-                id: `stock-${articulo.id}-${nivel}`,
-                tipo: "stock",
-                nivel,
-                articuloId: articulo.id,
-                articulo: articulo.nombre,
-                categoria: articulo.categoria,
-                actual,
-                minimo,
-                faltante: Number((minimo - actual).toFixed(3)),
-                unidad: articulo.unidad_medida,
-            };
-        });
-}
-
-const PRIORIDAD = {
-    vencido: 0,
-    agotado: 1,
-    urgente: 2,
-    critico: 3,
-    proximo: 4,
-    minimo: 5,
-};
-
-export function generarAlertas(inventario, configuracion = cargarConfiguracion()) {
-    return [
-        ...alertasVencimiento(inventario, configuracion.diasAnticipacion),
-        ...alertasStockMinimo(inventario),
-    ].sort((a, b) =>
-        PRIORIDAD[a.nivel] - PRIORIDAD[b.nivel] ||
-        a.articulo.localeCompare(b.articulo)
-    );
-}
-
-export const NOMBRES_NIVEL = {
-    vencido: "Vencido",
-    urgente: "Urgente",
-    proximo: "Próximo a vencer",
-    agotado: "Agotado",
-    critico: "Crítico",
-    minimo: "En stock mínimo",
-};
-
-const CLAVE_ATENDIDAS = "amandita_alertas_atendidas_v1";
-
-export function cargarAtendidas() {
-    const datos = leerJSON(CLAVE_ATENDIDAS, {});
-    return datos && typeof datos === "object" && !Array.isArray(datos)
-        ? datos
-        : {};
-}
-
-function guardarAtendidas(atendidas) {
-    localStorage.setItem(CLAVE_ATENDIDAS, JSON.stringify(atendidas));
-}
-
-export function depurarAtendidas(alertas) {
-    const vigentes = new Set(alertas.map((a) => a.id));
-    const atendidas = cargarAtendidas();
-
-    const depuradas = Object.fromEntries(
-        Object.entries(atendidas).filter(([id]) => vigentes.has(id))
-    );
-
-    if (Object.keys(depuradas).length !== Object.keys(atendidas).length) {
-        guardarAtendidas(depuradas);
+        return dias < 0 ? "vencido" : dias <= 2 ? "urgente" : "proximo";
     }
 
-    return depuradas;
+    const actual = Number(alerta.stock_actual) || 0;
+    const minimo = Number(alerta.stock_minimo) || 0;
+
+    return actual === 0
+        ? "agotado"
+        : actual <= minimo * 0.5
+            ? "critico"
+            : "minimo";
 }
 
-export function marcarAtendida(alertaId, usuario) {
-    const atendidas = cargarAtendidas();
+/**
+ * Convierte una alerta del backend al formato que usan las pantallas.
+ * `lotes` (opcional) es la lista de /api/lotes para mostrar la cantidad del lote.
+ */
+export function normalizarAlerta(a, lotes = []) {
+    const esVencimiento = a.tipo === "vencimiento";
+    const actual = Number(a.stock_actual) || 0;
+    const minimo = Number(a.stock_minimo) || 0;
+    const lote = esVencimiento
+        ? lotes.find((l) => Number(l.id) === Number(a.lote_id))
+        : null;
 
-    atendidas[alertaId] = {
-        fecha: new Date().toISOString(),
-        usuario: usuario || null,
+    return {
+        id: a.id,
+        tipo: esVencimiento ? "vencimiento" : "stock",
+        nivel: nivelDe(a),
+        estado: a.estado,
+        articuloId: a.articulo_id,
+        articulo: a.articulo,
+        categoria: a.categoria,
+        unidad: a.unidad_medida,
+        codigoLote: a.numero_lote || "sin número",
+        fechaVencimiento: a.fecha_vencimiento,
+        dias: a.dias_restantes === null ? null : Number(a.dias_restantes),
+        cantidad: lote ? Number(lote.cantidadDisponible) : null,
+        actual,
+        minimo,
+        faltante: Number(Math.max(minimo - actual, 0).toFixed(2)),
+        fechaAtendida: a.fecha_atendida,
+        // null = el sistema la cerró sola porque la situación ya se resolvió.
+        atendidaPor: a.atendida_por,
     };
-
-    guardarAtendidas(atendidas);
-    return atendidas;
 }
 
-export function reactivarAlerta(alertaId) {
-    const atendidas = cargarAtendidas();
-
-    delete atendidas[alertaId];
-
-    guardarAtendidas(atendidas);
-    return atendidas;
-}
-
-export const OPCIONES_ANTICIPACION = [3, 5, 7, 15, 30];
-
-export function guardarConfiguracion(datos) {
-    const dias = Number(datos.diasAnticipacion);
-
-    if (!OPCIONES_ANTICIPACION.includes(dias)) {
-        throw new Error("Selecciona una anticipación válida.");
-    }
-
-    const configuracion = { diasAnticipacion: dias };
-
-    localStorage.setItem(
-        CLAVE_CONFIGURACION,
-        JSON.stringify(configuracion)
+export function ordenarAlertas(alertas) {
+    return [...alertas].sort(
+        (a, b) =>
+            PRIORIDAD[a.nivel] - PRIORIDAD[b.nivel] ||
+            a.articulo.localeCompare(b.articulo)
     );
-
-    return configuracion;
 }

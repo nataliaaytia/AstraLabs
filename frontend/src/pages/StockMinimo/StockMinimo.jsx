@@ -76,6 +76,23 @@ function StockMinimo({ navegar }) {
                 texto: `Se actualizó el stock mínimo de ${total} artículo(s).`,
             });
         } catch (error) {
+            if (error.guardados?.length) {
+                // Algunos cambios sí se guardaron: mostrarlos y dejar solo los pendientes.
+                try {
+                    setArticulos(await inventarioApi.listarArticulos());
+                } catch {
+                    // Si no se puede recargar, se conserva la lista actual.
+                }
+
+                setCambios((anterior) =>
+                    Object.fromEntries(
+                        Object.entries(anterior).filter(
+                            ([id]) => !error.guardados.includes(id)
+                        )
+                    )
+                );
+            }
+
             setMensaje({ tipo: "error", texto: error.message });
         } finally {
             setGuardando(false);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
+import { normalizarAlerta } from "../../data/alertas";
 import {
     TIPOS_REPORTE,
     construirReporte,
@@ -10,7 +11,12 @@ import "../InventarioComun.css";
 import "./Reportes.css";
 
 function Reportes({ navegar }) {
-    const [datos, setDatos] = useState({ inventario: [], movimientos: [] });
+    const [datos, setDatos] = useState({
+        inventario: [],
+        movimientos: [],
+        lotes: [],
+        alertas: [],
+    });
     const [tipo, setTipo] = useState("inventario");
     const [filtros, setFiltros] = useState({ desde: "", hasta: "" });
     const [cargando, setCargando] = useState(true);
@@ -23,9 +29,18 @@ function Reportes({ navegar }) {
         Promise.all([
             inventarioApi.listarArticulos(),
             inventarioApi.listarMovimientos(),
+            inventarioApi.listarLotes(),
+            inventarioApi.listarAlertas({ estado: "pendiente" }),
         ])
-            .then(([inventario, movimientos]) => {
-                if (activo) setDatos({ inventario, movimientos });
+            .then(([inventario, movimientos, lotes, panel]) => {
+                if (!activo) return;
+
+                setDatos({
+                    inventario,
+                    movimientos,
+                    lotes,
+                    alertas: panel.alertas.map((a) => normalizarAlerta(a, lotes)),
+                });
             })
             .catch((err) => {
                 if (activo) setError(err.message);

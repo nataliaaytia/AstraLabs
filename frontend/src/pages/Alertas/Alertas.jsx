@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { inventarioApi } from "../../services/inventarioApi";
 import {
     NOMBRES_NIVEL,
     OPCIONES_ANTICIPACION,
-    cargarConfiguracion,
-    depurarAtendidas,
-    generarAlertas,
-    guardarConfiguracion,
-    marcarAtendida,
-    reactivarAlerta,
+    normalizarAlerta,
+    ordenarAlertas,
     textoDias,
 } from "../../data/alertas";
 import "../InventarioComun.css";
@@ -21,30 +17,54 @@ const FILTROS = [
     { valor: "atendidas", texto: "Atendidas" },
 ];
 
-function Alertas({ navegar, usuarioActual }) {
+function Alertas({ navegar }) {
     const [todas, setTodas] = useState([]);
-    const [atendidas, setAtendidas] = useState({});
+    const [diasAnticipacion, setDiasAnticipacion] = useState(null);
     const [mensaje, setMensaje] = useState("");
-    const [configuracion, setConfiguracion] = useState(cargarConfiguracion);
     const [filtro, setFiltro] = useState("todas");
     const [cargando, setCargando] = useState(true);
+    const [procesando, setProcesando] = useState(false);
     const [error, setError] = useState("");
 
-    const obtenerAlertas = async () => {
-        const inventario = await inventarioApi.listarArticulos();
-        return generarAlertas(inventario, configuracion);
-    };
+    // El backend sincroniza las alertas con el inventario antes de responder.
+    const obtenerDatos = useCallback(async () => {
+        const [panel, umbral, lotes] = await Promise.all([
+            inventarioApi.listarAlertas(),
+            inventarioApi.obtenerUmbralVencimiento(),
+            inventarioApi.listarLotes(),
+        ]);
+
+        return {
+            lista: panel.alertas.map((a) => normalizarAlerta(a, lotes)),
+            dias: umbral.dias,
+        };
+    }, []);
+
+    const cargar = useCallback(async () => {
+        setCargando(true);
+        setError("");
+
+        try {
+            const { lista, dias } = await obtenerDatos();
+
+            setTodas(lista);
+            setDiasAnticipacion(dias);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCargando(false);
+        }
+    }, [obtenerDatos]);
 
     useEffect(() => {
         let activo = true;
 
-        inventarioApi.listarArticulos()
-            .then((inventario) => generarAlertas(inventario, configuracion))
-            .then((lista) => {
-                if (activo) {
-                    setTodas(lista);
-                    setAtendidas(depurarAtendidas(lista));
-                }
+        obtenerDatos()
+            .then(({ lista, dias }) => {
+                if (!activo) return;
+
+                setTodas(lista);
+                setDiasAnticipacion(dias);
             })
             .catch((err) => {
                 if (activo) setError(err.message);
@@ -56,52 +76,53 @@ function Alertas({ navegar, usuarioActual }) {
         return () => {
             activo = false;
         };
-    }, [configuracion]);
+    }, [obtenerDatos]);
 
-    const actualizar = async () => {
-        setCargando(true);
-        setError("");
-
-        try {
-            const lista = await obtenerAlertas();
-
-            setTodas(lista);
-            setAtendidas(depurarAtendidas(lista));
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setCargando(false);
-        }
+    const actualizar = () => {
+        setMensaje("");
+        cargar();
     };
 
-    const cambiarAnticipacion = (evento) => {
-        try {
-            const nueva = guardarConfiguracion({
-                diasAnticipacion: evento.target.value,
-            });
+    const cambiarAnticipacion = async (evento) => {
+        const dias = Number(evento.target.value);
 
-            setCargando(true);
-            setConfiguracion(nueva);
+        setProcesando(true);
+        setError("");
+        setMensaje("");
+
+        try {
+            await inventarioApi.configurarUmbralVencimiento(dias);
+            await cargar();
             setMensaje(
-                `Ahora verás los vencimientos de los próximos ${nueva.diasAnticipacion} días.`
+                `Ahora verás los vencimientos de los próximos ${dias} días.`
             );
         } catch (err) {
             setError(err.message);
+        } finally {
+            setProcesando(false);
         }
     };
 
-    const atender = (alerta) => {
-        setAtendidas({ ...marcarAtendida(alerta.id, usuarioActual?.nombre) });
-        setMensaje(`La alerta de ${alerta.articulo} se marcó como atendida.`);
+    const atender = async (alerta) => {
+        setProcesando(true);
+        setError("");
+        setMensaje("");
+
+        try {
+            await inventarioApi.atenderAlerta(alerta.id);
+            await cargar();
+            setMensaje(`La alerta de ${alerta.articulo} se marcó como atendida.`);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setProcesando(false);
+        }
     };
 
-    const reactivar = (alerta) => {
-        setAtendidas({ ...reactivarAlerta(alerta.id) });
-        setMensaje(`La alerta de ${alerta.articulo} volvió a estar activa.`);
-    };
-
-    const alertas = todas.filter((a) => !atendidas[a.id]);
-    const yaAtendidas = todas.filter((a) => atendidas[a.id]);
+    const alertas = ordenarAlertas(
+        todas.filter((a) => a.estado === "pendiente")
+    );
+    const yaAtendidas = todas.filter((a) => a.estado === "atendida");
 
     const deVencimiento = alertas.filter((a) => a.tipo === "vencimiento");
     const deStock = alertas.filter((a) => a.tipo === "stock");
@@ -115,6 +136,12 @@ function Alertas({ navegar, usuarioActual }) {
         : filtro === "atendidas"
             ? yaAtendidas
             : alertas.filter((a) => a.tipo === filtro);
+
+    // Si el umbral guardado no es una de las opciones, se agrega para mostrarlo.
+    const opcionesAnticipacion = OPCIONES_ANTICIPACION.includes(diasAnticipacion)
+        || diasAnticipacion === null
+        ? OPCIONES_ANTICIPACION
+        : [...OPCIONES_ANTICIPACION, diasAnticipacion].sort((a, b) => a - b);
 
     return (
         <section className="inv-pagina alertas-pagina">
@@ -171,7 +198,7 @@ function Alertas({ navegar, usuarioActual }) {
                         <span>Por vencer</span>
                         <strong>{deVencimiento.length}</strong>
                         <small>
-                            En los próximos {configuracion.diasAnticipacion} días
+                            En los próximos {diasAnticipacion ?? "—"} días
                         </small>
                     </div>
 
@@ -194,11 +221,12 @@ function Alertas({ navegar, usuarioActual }) {
                     </div>
 
                     <select
-                        value={configuracion.diasAnticipacion}
+                        value={diasAnticipacion ?? ""}
                         onChange={cambiarAnticipacion}
+                        disabled={diasAnticipacion === null || procesando}
                         aria-label="Días de anticipación"
                     >
-                        {OPCIONES_ANTICIPACION.map((dias) => (
+                        {opcionesAnticipacion.map((dias) => (
                             <option key={dias} value={dias}>
                                 {dias} días antes
                             </option>
@@ -276,8 +304,9 @@ function Alertas({ navegar, usuarioActual }) {
                                         {alerta.tipo === "vencimiento" ? (
                                             <p>
                                                 Lote {alerta.codigoLote} ·{" "}
-                                                {textoDias(alerta.dias)} ({alerta.fechaVencimiento}) ·{" "}
-                                                {alerta.cantidad} {alerta.unidad}
+                                                {textoDias(alerta.dias)} ({alerta.fechaVencimiento})
+                                                {alerta.cantidad !== null &&
+                                                    ` · ${alerta.cantidad} ${alerta.unidad}`}
                                             </p>
                                         ) : (
                                             <p>
@@ -288,24 +317,14 @@ function Alertas({ navegar, usuarioActual }) {
                                         )}
 
                                         <div className="alertas-item-acciones">
-                                            {atendidas[alerta.id] ? (
-                                                <>
-                                                    <small>
-                                                        Atendida el{" "}
-                                                        {new Date(
-                                                            atendidas[alerta.id].fecha
-                                                        ).toLocaleDateString("es-BO")}
-                                                        {atendidas[alerta.id].usuario &&
-                                                            ` por ${atendidas[alerta.id].usuario}`}
-                                                    </small>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => reactivar(alerta)}
-                                                    >
-                                                        Reactivar
-                                                    </button>
-                                                </>
+                                            {alerta.estado === "atendida" ? (
+                                                <small>
+                                                    {alerta.atendidaPor
+                                                        ? `Atendida el ${new Date(
+                                                            alerta.fechaAtendida
+                                                        ).toLocaleDateString("es-BO")} por ${alerta.atendidaPor}`
+                                                        : "Se resolvió sola: el inventario ya está en orden."}
+                                                </small>
                                             ) : (
                                                 <>
                                                     {alerta.tipo === "stock" && (
@@ -321,6 +340,7 @@ function Alertas({ navegar, usuarioActual }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => atender(alerta)}
+                                                        disabled={procesando}
                                                     >
                                                         ✓ Marcar atendida
                                                     </button>

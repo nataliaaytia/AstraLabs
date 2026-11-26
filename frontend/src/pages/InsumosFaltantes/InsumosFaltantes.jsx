@@ -4,6 +4,7 @@ import {
     ESTADOS_PENDIENTES,
     calcularInsumos,
     resumirPlanes,
+    stockUtilizable,
 } from "../../data/insumos";
 import "../InventarioComun.css";
 import "./InsumosFaltantes.css";
@@ -37,6 +38,7 @@ const PASOS = [
 function InsumosFaltantes({ navegar }) {
     const [planes, setPlanes] = useState([]);
     const [inventario, setInventario] = useState([]);
+    const [lotes, setLotes] = useState([]);
     const [seleccion, setSeleccion] = useState("todos");
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
@@ -48,8 +50,9 @@ function InsumosFaltantes({ navegar }) {
         Promise.all([
             inventarioApi.listarPlanesComida(),
             inventarioApi.listarArticulos(),
+            inventarioApi.listarLotes(),
         ])
-            .then(([listaPlanes, listaArticulos]) => {
+            .then(([listaPlanes, listaArticulos, listaLotes]) => {
                 if (!activo) return;
 
                 setPlanes(
@@ -58,6 +61,7 @@ function InsumosFaltantes({ navegar }) {
                         .sort((a, b) => a.fecha.localeCompare(b.fecha))
                 );
                 setInventario(listaArticulos);
+                setLotes(listaLotes);
             })
             .catch((err) => {
                 if (activo) setError(err.message);
@@ -71,13 +75,14 @@ function InsumosFaltantes({ navegar }) {
         };
     }, []);
 
-    const resumenPlanes = resumirPlanes(planes, inventario);
+    const stock = stockUtilizable(lotes);
+    const resumenPlanes = resumirPlanes(planes, inventario, stock);
 
     const planesElegidos = seleccion === "todos"
         ? planes
         : planes.filter((p) => String(p.id) === seleccion);
 
-    const insumos = calcularInsumos(planesElegidos, inventario);
+    const insumos = calcularInsumos(planesElegidos, inventario, stock);
     const faltantes = insumos.filter((i) => i.faltante > 0);
     const bajoMinimo = insumos.filter((i) => i.estado === "bajo-minimo");
     const porReponer = insumos.filter((i) => i.reponer > 0);

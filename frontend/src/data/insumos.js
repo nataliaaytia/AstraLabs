@@ -1,14 +1,12 @@
-import { obtenerLotes } from "./lotes";
-
 export const ESTADOS_PENDIENTES = ["borrador", "confirmado"];
 
 function redondear(valor) {
     return Number(Number(valor).toFixed(3));
 }
 
-export function stockUtilizable(inventario) {
+// `lotes` es la lista que entrega /api/lotes (id, articuloId, fechaVencimiento, cantidadDisponible).
+export function stockUtilizable(lotes) {
     const hoy = new Date().toLocaleDateString("en-CA");
-    const lotes = obtenerLotes(inventario);
     const utilizable = new Map();
     const vencido = new Map();
 
@@ -33,11 +31,7 @@ const PRIORIDAD_ESTADO = {
     suficiente: 4,
 };
 
-export function calcularInsumos(
-    planes,
-    inventario,
-    stock = stockUtilizable(inventario)
-) {
+export function calcularInsumos(planes, inventario, stock) {
     const requeridos = new Map();
 
     for (const plan of planes) {
@@ -100,9 +94,7 @@ export function calcularInsumos(
         );
 }
 
-export function resumirPlanes(planes, inventario) {
-    const stock = stockUtilizable(inventario);
-
+export function resumirPlanes(planes, inventario, stock) {
     return planes.map((plan) => {
         const insumos = calcularInsumos([plan], inventario, stock);
         const faltantes = insumos.filter((i) => i.faltante > 0).length;

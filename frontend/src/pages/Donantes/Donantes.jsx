@@ -95,7 +95,7 @@ function Donantes({ navegar }) {
                 nombre: formulario.nombre.trim(),
                 contacto: formulario.contacto.trim(),
                 telefono: formulario.telefono.trim(),
-                correo: formulario.correo.trim(),
+                email: formulario.correo.trim(),
             });
 
             await cargarDatos();

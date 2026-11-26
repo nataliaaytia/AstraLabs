@@ -1,5 +1,4 @@
-import { obtenerLotes } from "./lotes";
-import { NOMBRES_NIVEL, generarAlertas, textoDias } from "./alertas";
+import { NOMBRES_NIVEL, ordenarAlertas, textoDias } from "./alertas";
 
 export const TIPOS_REPORTE = [
     {
@@ -10,7 +9,7 @@ export const TIPOS_REPORTE = [
     {
         valor: "movimientos",
         titulo: "Movimientos",
-        descripcion: "Salidas, mermas, donaciones y preparaciones.",
+        descripcion: "Entradas, salidas, mermas y excedentes.",
         usaFechas: true,
     },
     {
@@ -30,11 +29,14 @@ export const TIPOS_REPORTE = [
     },
 ];
 
+// Tipos de movimiento del backend (tabla `movimientos`).
+// Confirmar un plan de comida genera una salida.
 const NOMBRES_MOVIMIENTO = {
+    entrada: "Donación (entrada)",
     salida: "Salida",
     merma: "Merma",
-    donacion: "Donación",
-    preparacion_plan: "Preparación",
+    excedente: "Excedente",
+    ajuste: "Ajuste",
 };
 
 function numero(valor) {
@@ -86,25 +88,12 @@ function reporteMovimientos(movimientos, desde, hasta) {
         .forEach((m) => {
             const tipo = NOMBRES_MOVIMIENTO[m.tipo] || m.tipo;
 
-            if (m.tipo === "preparacion_plan") {
-                (m.ingredientes || []).forEach((i) => {
-                    filas.push([
-                        fechaCorta(m.fecha),
-                        tipo,
-                        i.articulo,
-                        numero(i.cantidad),
-                        `Plan: ${m.plan}`,
-                    ]);
-                });
-                return;
-            }
-
             filas.push([
                 fechaCorta(m.fecha),
                 tipo,
                 m.articulo,
                 numero(m.cantidad),
-                m.destino || m.motivo || m.donante || "",
+                m.destino || m.motivo || m.donante || m.observaciones || "",
             ]);
         });
 
@@ -114,12 +103,12 @@ function reporteMovimientos(movimientos, desde, hasta) {
     };
 }
 
-function reporteLotes(inventario) {
+function reporteLotes(inventario, lotes) {
     const hoy = new Date().toLocaleDateString("en-CA");
 
     return {
         columnas: ["Artículo", "Lote", "Vencimiento", "Cantidad", "Estado"],
-        filas: obtenerLotes(inventario)
+        filas: lotes
             .filter((l) => Number(l.cantidadDisponible) > 0)
             .sort((a, b) =>
                 (a.fechaVencimiento || "9999").localeCompare(
@@ -165,10 +154,10 @@ function reporteNecesidades(inventario) {
     };
 }
 
-function reporteAlertas(inventario) {
+function reporteAlertas(alertas) {
     return {
         columnas: ["Tipo", "Nivel", "Artículo", "Detalle"],
-        filas: generarAlertas(inventario).map((a) => [
+        filas: ordenarAlertas(alertas).map((a) => [
             a.tipo === "vencimiento" ? "Vencimiento" : "Stock mínimo",
             NOMBRES_NIVEL[a.nivel],
             a.articulo,
@@ -197,9 +186,9 @@ export function construirReporte(tipo, datos, filtros = {}) {
             filtros.desde,
             filtros.hasta
         ),
-        lotes: () => reporteLotes(datos.inventario),
+        lotes: () => reporteLotes(datos.inventario, datos.lotes),
         necesidades: () => reporteNecesidades(datos.inventario),
-        alertas: () => reporteAlertas(datos.inventario),
+        alertas: () => reporteAlertas(datos.alertas),
     };
 
     return {

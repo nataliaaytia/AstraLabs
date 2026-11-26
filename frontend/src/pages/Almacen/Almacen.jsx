@@ -5,7 +5,6 @@ import ModalExcedente from "../../components/Excedentes/Excedente";
 import { UNIDADES_MEDIDA } from "../../data/catalogo";
 import { DESTINOS_EXCEDENTE } from "../../data/excedentes";
 import { inventarioApi } from "../../services/inventarioApi";
-import { cargarAtendidas, generarAlertas } from "../../data/alertas";
 
 import "./Almacen.css";
 
@@ -65,20 +64,17 @@ function Almacen({ navegar, usuarioActual }) {
     useEffect(() => {
         let activo = true;
 
-        inventarioApi.listarArticulos()
-            .then((inventario) => {
+        inventarioApi.listarAlertas({ estado: "pendiente" })
+            .then(({ alertas }) => {
                 if (!activo) return;
 
-                const atendidas = cargarAtendidas();
-                const activas = generarAlertas(inventario).filter(
-                    (alerta) => !atendidas[alerta.id]
-                );
-
                 setAvisos({
-                    vencimiento: activas.filter(
+                    vencimiento: alertas.filter(
                         (a) => a.tipo === "vencimiento"
                     ).length,
-                    stock: activas.filter((a) => a.tipo === "stock").length,
+                    stock: alertas.filter(
+                        (a) => a.tipo === "stock_minimo"
+                    ).length,
                 });
             })
             .catch(() => {

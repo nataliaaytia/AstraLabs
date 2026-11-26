@@ -14,6 +14,7 @@ const menusRouter = require("./routes/menus");
 const planesComidaRouter = require("./routes/planesComida");
 const lotesRouter = require("./routes/lotes");
 const alertasRouter = require("./routes/alertas");
+const movimientosRouter = require("./routes/movimientos");
 const exportacionesRouter = require("./routes/exportaciones");
 
 //Seguridad
@@ -48,6 +49,7 @@ app.use("/api/menus", autenticar, menusRouter);
 app.use("/api/planes-comida", autenticar, planesComidaRouter);
 app.use("/api/lotes", autenticar, lotesRouter);
 app.use("/api/alertas", autenticar, alertasRouter);
+app.use("/api/movimientos", autenticar, movimientosRouter);
 app.use("/api", autenticar, catalogoRouter);
 
 const PORT = process.env.PORT || 3000;
