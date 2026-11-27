@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
 
 router.post(
   "/asignar",
-  requiereRol("Administradora", "Recepcion"),
+  requiereRol("Administradora", "Recepcion", "Almacen_Cocina"),
   async (req, res) => {
     try {
       const { articuloId, codigo, fechaVencimiento } = req.body;
